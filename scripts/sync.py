@@ -22,7 +22,9 @@ from pathlib import Path
 
 CORE_START = "<!-- AGENT-KIT:CORE:START -->"
 CORE_END = "<!-- AGENT-KIT:CORE:END -->"
-IGNORED_COPY_PATTERNS = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc")
+# *.zh.md files are in-repo Chinese translations for human readers; agents
+# must load the English originals only, so they are never distributed.
+IGNORED_COPY_PATTERNS = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc", "*.zh.md")
 
 
 class SyncError(RuntimeError):

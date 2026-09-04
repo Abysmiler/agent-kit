@@ -27,6 +27,12 @@ python scripts/sync.py --dry-run
 修改规则的正确方式：编辑 `core/INSTRUCTIONS.md`（唯一事实来源）或技能文件，
 再运行 `python scripts/sync.py --force`。不要直接编辑 adapters 下的渲染区块。
 
+## 中文翻译版
+
+每个英文文档在同目录下有对应的 `*.zh.md` 中文翻译版（如 `SKILL.md` →
+`SKILL.md.zh.md`），供人阅读。翻译版不参与 sync.py 分发——代理始终加载
+英文原版（frontmatter 元数据与机器标记以英文为准）。若中英不一致，以英文版为准。
+
 ## 目录结构
 
 ```
