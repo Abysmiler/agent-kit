@@ -58,7 +58,7 @@ def extract_core_block(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Atomic replace (design inherited from the original sync_codex_config.py)
+# Atomic replace
 # ---------------------------------------------------------------------------
 
 

@@ -3,11 +3,6 @@
 代理无关的编码代理约束套件：一份核心规则 + 8 个技能 + git 审计提醒钩子，
 同时支持 **Claude Code** 与 **Codex**。
 
-基于 [AGENTS.md-main](../AGENTS.md-main) 重构通用化：去除了原仓库的私人环境依赖
-（colima、飞书、sol_* 模型 profile、个人绝对路径），统一了原文档中的两处冲突
-（评审收敛准则统一为"单次覆盖完整的干净评审即接受"；worktree 约定统一由
-manual-git-worktrees 技能的 `.worktrees/current-agents/` 注册表管辖）。
-
 ## 快速开始
 
 ```bash
@@ -98,18 +93,3 @@ git config --local agentkit.maintainabilityAuditBaseline <sha>
 - 审计完成后提交消息带 `Maintenance-Audit: true` trailer，计数自动重置
 - 提示输出到 stderr，永远 exit 0，不阻塞提交
 - 环境变量 `AGENTKIT_MAINTAINABILITY_AUDIT_REMINDER=0` 可临时静默
-- 兼容读取原仓库的 `codex.maintainabilityAudit*` 配置键
-
-## 设计来源
-
-本套件重构自 AGENTS.md-main（Codex 个人约束仓库，其中 README 自述其余文件
-100% AI 生成）。主要通用化手术：
-
-1. sol_* 四档模型路由 → 三级角色档位（并修正原 sol_high 名实不符）
-2. 评审收敛准则冲突（2 连干净 vs 单次干净）→ 统一为单次干净
-3. 两套 worktree 约定 → 统一由 manual-git-worktrees 注册表管辖
-4. 私人路径（/Users/...、~/.codex 内嵌路径）→ 通用占位符
-5. 删除：feishu-message-sender（强私人依赖）、RESEARCH 目录、Docker/colima 段
-
-原仓库的 RESEARCH 目录（约 2300 行带证据分级的方法论研究）未迁移；
-需要了解设计依据时请参考原仓库。
