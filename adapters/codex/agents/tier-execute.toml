@@ -1,0 +1,7 @@
+name = "tier-execute"
+description = "Routine implementation tier for agent-kit workflows"
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+
+developer_instructions = """
+"""

@@ -1,0 +1,7 @@
+name = "tier-plan"
+description = "Full-plan and hard-cap re-decomposition tier for agent-kit workflows"
+model = "gpt-5.6-sol"
+model_reasoning_effort = "max"
+
+developer_instructions = """
+"""
