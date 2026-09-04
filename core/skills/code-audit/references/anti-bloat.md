@@ -4,11 +4,11 @@ Use this reference when the audit request mentions over-engineering, bloat, de-b
 
 Source discipline:
 
-- Derive this focus from the original Ponytail checkout at `/Users/ibobby/GitHub/ponytail`, especially `skills/ponytail/SKILL.md`, `skills/ponytail-review/SKILL.md`, and `skills/ponytail-audit/SKILL.md`.
-- Do not use `$lean-audit` or `/Users/ibobby/.codex/skills/lean-audit` as the source for full audit behavior. That skill is only a small-review derivative.
-- Do not turn the full audit into code golf. Ponytail's rule is "lazy means efficient, not careless."
+- Derive this focus from the repository's own largest existing skills and their review/audit conventions.
+- Do not derive full audit behavior from small-review derivatives of this skill.
+- Do not turn the full audit into code golf. The rule is "lazy means efficient, not careless."
 
-Apply the Ponytail ladder during the simplification pass:
+Apply this ladder during the simplification pass:
 
 1. Does this need to exist at all?
 2. Does the standard library do this?

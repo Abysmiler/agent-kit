@@ -10,7 +10,7 @@ Audit the current system as a maintained product, not merely a diff. Use durable
 ## Boundary
 
 - Use this skill for periodic or explicitly requested codebase/system audits.
-- Do not use it as the default merge gate for one bounded pull request; use `$code-review` for that.
+- Do not use it as the default merge gate for one bounded pull request; use the `code-review` skill for that.
 - Audit actual repository, runtime, delivery, and agent-tooling behavior. Do not equate a static scan or clean test run with a complete audit.
 - Treat an audit as risk sampling unless a defined baseline proves exhaustive coverage.
 - Repair only when the user explicitly authorizes remediation.
@@ -248,7 +248,7 @@ Use the remediation convergence rules in `references/audit-loop-protocol.md`. At
 For an independent audit executor, an orchestrator may pass only:
 
 ```text
-Audit {working path}, [$code-audit]({user home dir}/.codex/skills/code-audit/SKILL.md)
+Audit {working path}, [code-audit]({agent host skills directory}/code-audit/SKILL.md)
 ```
 
 Do not leak prior suspected findings into an independent discovery pass unless the user explicitly requests a targeted audit.

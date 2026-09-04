@@ -10,7 +10,7 @@
 - Section artifacts: `.agent-work/sections/`
 - Review index: `.agent-work/reviews/`
 - Output: `.agent-work/reviews/FEATURE-INTEGRATION-r01.md`
-- Review skill: `$code-review`
+- Review skill: `code-review`
 
 ## Required Focus
 

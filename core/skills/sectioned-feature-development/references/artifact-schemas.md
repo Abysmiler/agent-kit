@@ -189,7 +189,7 @@ Every counting review file should record:
 - Checks/evidence.
 - Reviewer's local verdict.
 
-The main orchestrator separately records `review_round` and `clean_streak`; an individual reviewer does not decide the two-clean workflow condition.
+The main orchestrator separately records `review_round` and `clean_streak`; an individual reviewer does not decide the single-clean acceptance condition.
 
 ## 7. Hard-cap replan files
 
@@ -204,12 +204,12 @@ Required records:
 - Failed parent section ID/title and lineage.
 - Original `section_base`.
 - Failed tip.
-- `codex/backup/***` branch.
+- `agent-kit/backup/***` branch.
 - Five review files and reviewed heads.
 - Round-by-round new material findings/root causes.
 - Repair commits/checks.
 - Recurring failure pattern.
-- `@sol_max` prompt/context summary.
+- `[tier: plan]` decomposer prompt/context summary.
 - Descendant IDs and dependency/requirement changes.
 - Retry branch/worktree and new active section.
 

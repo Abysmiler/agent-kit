@@ -1,6 +1,6 @@
 # Section-Aware Review Protocol
 
-Use this protocol when `$code-review` is invoked by a sectioned large-feature workflow. It extends the ordinary review protocol without replacing its evidence, finding, repair, reset, or convergence rules.
+Use this protocol when the `code-review` skill is invoked by a sectioned large-feature workflow. It extends the ordinary review protocol without replacing its evidence, finding, repair, reset, or convergence rules.
 
 ## Contents
 
@@ -242,7 +242,7 @@ This verdict is provisional and does not establish whole-feature merge readiness
 Review mode: SECTION.
 Review section {ID} in {working path} from {section_base} to {section_head}.
 Read {feature_contract}, {section_contract}, and {handoff}.
-Use [$code-review]({skill path}/SKILL.md).
+Use the code-review skill ({skill path}/SKILL.md).
 Write the review to {output_path}.
 Do not repair and do not review the whole feature except for the direct impact cone.
 ```
@@ -253,7 +253,7 @@ Do not repair and do not review the whole feature except for the direct impact c
 Review mode: DELTA.
 Verify findings {IDs} for section {ID} in {working path} from {repair_base} to {repair_head}.
 Read the frozen findings at {ledger_path} and review only the repair delta plus its invalidated impact cone.
-Use [$code-review]({skill path}/SKILL.md).
+Use the code-review skill ({skill path}/SKILL.md).
 Write the result to {output_path}.
 ```
 
@@ -263,7 +263,7 @@ Write the result to {output_path}.
 Review mode: INTEGRATION.
 Review feature {name} in {working path} from {feature_base} to {feature_head}.
 Read {feature_contract}, {feature_state}, section artifacts, and the review index.
-Use [$code-review]({skill path}/SKILL.md).
+Use the code-review skill ({skill path}/SKILL.md).
 Focus on full acceptance and cross-section interactions; do not mechanically replay every accepted local line.
 Write the review to {output_path}.
 ```

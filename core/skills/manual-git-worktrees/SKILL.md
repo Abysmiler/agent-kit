@@ -64,3 +64,12 @@ Use this skill only when explicitly invoked.
    - Delete only the registry Markdown file created for this task.
    - Do this when the task is complete, abandoned, or blocked before handing control back to the user.
    - If waiting for another active agent is required, report the conflict and end the response instead of keeping the task open.
+
+## Relationship to sectioned-feature-development
+
+This skill owns the ONLY worktree convention in agent-kit. The
+sectioned-feature-development workflow creates its retry and parallel-section
+worktrees under the same `.worktrees/` workspace and registers every active
+task in `.worktrees/current-agents/` using this skill's conflict-check
+protocol. When both are active, the registry is the single source of truth
+for scope conflicts.

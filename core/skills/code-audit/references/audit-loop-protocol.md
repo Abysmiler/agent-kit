@@ -513,7 +513,7 @@ Keep each cleanup reviewable, reversible, and independently verified.
 ### Independent audit discovery
 
 ```text
-Audit {working path}, [$code-audit]({skill path}/SKILL.md)
+Audit {working path}, [code-audit]({skill path}/SKILL.md)
 ```
 
 Keep prior suspected findings out of an independent discovery prompt unless the user requests a targeted audit.

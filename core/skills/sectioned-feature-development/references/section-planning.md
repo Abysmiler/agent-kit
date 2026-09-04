@@ -246,9 +246,9 @@ When uncertain, run sequentially. Parallel agents can increase throughput while 
 
 ## 9. Hard-cap re-decomposition
 
-When one active section reaches five fresh full `SECTION` review rounds without two consecutive clean rounds, do not increase the review budget. Treat the five reports as empirical evidence that the section boundary is still wrong for agentic implementation/review.
+When one active section reaches five fresh full `SECTION` review rounds without a clean, coverage-complete round, do not increase the review budget. Treat the five reports as empirical evidence that the section boundary is still wrong for agentic implementation/review.
 
-The `@sol_max` decomposer should split only the failed section and preserve accepted predecessors plus the original feature contract. Use hierarchical IDs such as `S03.1`, `S03.2`; if `S03.1` later fails, use `S03.1.1`, `S03.1.2`.
+The `[tier: plan]` decomposer should split only the failed section and preserve accepted predecessors plus the original feature contract. Use hierarchical IDs such as `S03.1`, `S03.2`; if `S03.1` later fails, use `S03.1.1`, `S03.1.2`.
 
 Count dots in the lineage ID as recursive split depth: `S03` is depth `0`, `S03.1` depth `1`, `S03.1.1` depth `2`, and `S03.1.1.1` depth `3`. Complete hard-cap backup, decomposition, plan validation, retry setup, and descendant execution autonomously through depth `3`. Only when the next split would create depth `4+` should orchestration pause and ask Human whether to authorize deeper recursion or re-plan the affected boundary.
 

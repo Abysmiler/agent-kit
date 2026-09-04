@@ -8,10 +8,10 @@
 - Replan generation: `<n>`
 - Original section base: `<commit>`
 - Failed tip: `<commit>`
-- Backup branch: `codex/backup/<...>`
+- Backup branch: `agent-kit/backup/<...>`
 - Failed working path: `<path>`
 - Hard cap: `5 full SECTION reviews`
-- Required acceptance: `2 consecutive clean full SECTION reviews`
+- Required acceptance: `a clean, coverage-complete full SECTION review`
 
 ## Five Review Rounds
 
@@ -39,7 +39,7 @@
 - Repair-induced interactions: <...>
 - Evidence that motivates the split: <...>
 
-## @sol_max Re-decomposition Request
+## [tier: plan] Re-decomposition Request
 
 - Split only this parent section.
 - Preserve accepted predecessors and user-owned feature semantics.
@@ -59,6 +59,6 @@
 
 - Parent state: `SPLIT_AFTER_HARD_CAP`
 - Retry starts from: `<original section base>`
-- Retry branch/worktree: `<codex/retry/...>`
+- Retry branch/worktree: `<agent-kit/retry/...>`
 - First ready descendant: `<Sxx.1>`
 - Failed implementation commits cherry-picked: `no`

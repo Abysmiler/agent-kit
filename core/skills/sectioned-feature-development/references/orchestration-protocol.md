@@ -30,15 +30,15 @@ Receives one extracted section and frozen contract. It implements only that sect
 
 ### Section reviewer
 
-A fresh `sol_xhigh` context running `$code-review` in `SECTION` mode. Every counting review is a new full review of the current section range and direct semantic impact cone. It does not receive previous review conclusions before forming its own view.
+A fresh `[tier: review]` context running the `code-review` skill in `SECTION` mode. Every counting review is a new full review of the current section range and direct semantic impact cone. It does not receive previous review conclusions before forming its own view.
 
 ### Repair agent
 
-A `sol_high` context receiving the current round's frozen agent-fixable findings. It makes the smallest coherent repair, runs relevant checks, and records what changed. It does not decide whether the section is accepted.
+A `[tier: review]` context receiving the current round's frozen agent-fixable findings. It makes the smallest coherent repair, runs relevant checks, and records what changed. It does not decide whether the section is accepted.
 
 ### Hard-cap decomposer
 
-A clean `@sol_max` context (profile `sol_max`) used only after five full review rounds fail to produce two consecutive clean rounds. It receives the failed section, original section base, current `PLAN-FULL.md`, and the five review histories. It splits only that section into smaller descendants and updates affected plan edges; it does not implement product code.
+A clean `[tier: plan]` subagent used only after five full review rounds fail to produce a clean, coverage-complete round. It receives the failed section, original section base, current `PLAN-FULL.md`, and the five review histories. It splits only that section into smaller descendants and updates affected plan edges; it does not implement product code.
 
 ### Integration reviewer
 
@@ -78,10 +78,10 @@ Feature contract: .agent-work/PLAN-FULL.md
 Section contract: .agent-work/sections/{ID}-CONTRACT.md
 Implementation handoff: .agent-work/sections/{ID}-HANDOFF.md
 Output: .agent-work/reviews/{ID}-SECTION-r{NN}.md
-Use: $code-review
+Use: the code-review skill
 ```
 
-Do not include previous review findings, whether the last round was clean, or language such as “final confirmation”. The main orchestrator, not the reviewer, owns the two-clean-round rule.
+Do not include previous review findings, whether the last round was clean, or language such as “final confirmation”. The main orchestrator, not the reviewer, owns the single-clean acceptance rule.
 
 ### Repair packet
 
@@ -97,7 +97,7 @@ Required checks: {commands}
 Do not broaden scope or fix unlisted speculative issues.
 ```
 
-### Hard-cap `@sol_max` packet
+### Hard-cap `[tier: plan]` packet
 
 ```text
 Task: Re-decompose one non-converging section. Do not implement product code.
@@ -116,7 +116,7 @@ Review files:
   - .agent-work/reviews/{ID}-SECTION-r04.md
   - .agent-work/reviews/{ID}-SECTION-r05.md
 
-The section failed to reach two consecutive clean full SECTION reviews within five rounds.
+The section failed to reach a clean, coverage-complete full SECTION review within five rounds.
 Split only this section into smaller independently implementable, testable, and reviewable descendants.
 Preserve accepted predecessor sections and user-owned feature semantics.
 Use hierarchical lineage IDs such as {ID}.1, {ID}.2; recursively extend through depth 3 without pausing.
@@ -139,20 +139,21 @@ Review/replan evidence: .agent-work/reviews/, .agent-work/replans/
 Focus: full acceptance, cross-section contracts, migration, rollout/rollback,
 security, reliability, operations, cleanup, and deferred-work closure.
 Output: .agent-work/reviews/FEATURE-INTEGRATION-r01.md
-Use: $code-review
+Use: the code-review skill
 ```
 
-## 3. Profile routing
+## 3. Tier routing
 
-When the configured aliases exist, use:
+Map role tiers to the host's available sub-agent tiers (see the Model Routing
+Tiers section of the core instructions):
 
-- ordinary section implementation: `sol-medium`;
-- high-risk section implementation and repairs: `sol_high`;
-- every counting full `SECTION` review: clean `sol_xhigh`;
-- five-round hard-cap re-decomposition: clean `@sol_max` (profile `sol_max`);
-- final integration review: clean `sol_xhigh` unless governing instructions specify otherwise.
+- ordinary section implementation: `[tier: execute]`;
+- high-risk section implementation and repairs: `[tier: review]`;
+- every counting full `SECTION` review: a fresh `[tier: review]` reviewer context;
+- five-round hard-cap re-decomposition: a clean `[tier: plan]` subagent;
+- final integration review: a fresh `[tier: review]` reviewer context unless governing instructions specify otherwise.
 
-`@sol_max` is not a generic sixth reviewer. Its task is to change the decomposition, not to continue the same search process.
+The `[tier: plan]` decomposer is not a generic sixth reviewer. Its task is to change the decomposition, not to continue the same search process.
 
 ## 4. Section orchestration algorithm
 
@@ -173,7 +174,7 @@ for section in dependency_order(active_leaf_sections):
     while review_round < 5:
         review_round += 1
         section_head = current_head()
-        report = run_clean_sol_xhigh_full_SECTION_review(
+        report = run_clean_full_SECTION_review(
             section_base,
             section_head,
             output=f"{section}-SECTION-r{review_round:02d}.md"
@@ -185,16 +186,15 @@ for section in dependency_order(active_leaf_sections):
             persist_state_and_block_for_decision()
 
         if findings.has_no_new_material_actionable_issue():
+            # One coverage-complete clean review accepts the section.
             clean_streak += 1
             persist_round_state()
-            if clean_streak == 2:
-                accept_section_provisionally()
-                break
-            continue
+            accept_section_provisionally()
+            break
 
         clean_streak = 0
         fixable = findings.agent_fixable_material_items()
-        run_sol_high_repair(fixable)
+        run_repair(fixable)
         inspect_repo_and_handoff()
         run_relevant_checks()
         commit_if_authorized("repair")
@@ -228,14 +228,14 @@ Targeted DELTA verification may be useful inside a repair wave, especially for r
 
 There is no soft cap. The only review-round budget is five full `SECTION` reviews per active section attempt.
 
-If round 5 ends without `clean_streak == 2`:
+If round 5 ends without section acceptance (no clean, coverage-complete full review):
 
 1. **Do not run round 6.**
 2. Determine the next descendant depth. If it is `1`–`3`, **do not ask whether to continue**. If it is `4+`, preserve evidence and request Human approval for deeper recursion or a re-plan.
 3. Persist the failed attempt and review history.
-4. Create `codex/backup/{feature-slug}-{section-id}-g{generation}-{timestamp}` at the failed tip.
+4. Create `agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{timestamp}` at the failed tip.
 5. Compile a round-by-round hard-cap summary.
-6. For depth `1`–`3`, invoke clean `@sol_max` with the packet above. For depth `4+`, stop before invocation unless Human authorizes deeper recursion.
+6. For depth `1`–`3`, invoke a clean `[tier: plan]` decomposer with the packet above. For depth `4+`, stop before invocation unless Human authorizes deeper recursion.
 7. Validate the revised `PLAN-FULL.md`.
 8. Mark the failed parent `SPLIT_AFTER_HARD_CAP` and activate its descendants.
 9. Retry descendants from the failed parent's original `section_base`, not from the failed tip; continue directly through depth `3` without a progress pause.
@@ -254,7 +254,7 @@ The summary must preserve evidence, not vague “review still found issues” la
 
 Also state recurring patterns: contract coupling, ownership ambiguity, too many behaviors, weak oracle, repair-induced interaction, or another evidence-backed cause.
 
-### Decomposition requirements for `@sol_max`
+### Decomposition requirements for the `[tier: plan]` decomposer
 
 A valid split must do more than reduce line count. Descendants should separate one or more of:
 
@@ -298,7 +298,7 @@ After hard-cap backup, prefer a new retry branch/worktree rooted at `section_bas
 Recommended retry branch:
 
 ```text
-codex/retry/{feature-slug}-{section-id}-g{next-generation}-{YYYYMMDD-HHMMSS}
+agent-kit/retry/{feature-slug}-{section-id}-g{next-generation}-{YYYYMMDD-HHMMSS}
 ```
 
 Rules:
@@ -307,6 +307,7 @@ Rules:
 - do not cherry-pick them by default;
 - carry forward the revised planning/state artifacts, not failed product-code diffs;
 - if unrelated dirty user work exists, leave its worktree untouched and create an isolated retry worktree;
+- create retry worktrees under the repository-root `.worktrees/` workspace and register the retry task in `.worktrees/current-agents/` per the manual-git-worktrees skill;
 - update `FEATURE-STATE.md` with the new active path/branch.
 
 ## 8. Decision handling
@@ -317,13 +318,13 @@ Rules:
 - two authoritative sources conflict;
 - compatibility/migration behavior requires owner choice;
 - acceptable risk or rollout policy cannot be inferred;
-- the `@sol_max` split would require changing a frozen user-owned requirement.
+- the `[tier: plan]` split would require changing a frozen user-owned requirement.
 
 ### Must not block merely for permission
 
 - review round 5 was reached;
 - a backup branch must be created;
-- `@sol_max` must be invoked;
+- the `[tier: plan]` decomposer must be invoked;
 - the current section must be split;
 - a retry branch/worktree must be created under already delegated execution authority;
 - the main agent must extract the first ready descendant and continue.

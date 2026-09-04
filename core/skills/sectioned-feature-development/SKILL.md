@@ -1,11 +1,11 @@
 ---
 name: sectioned-feature-development
-description: "Plan and execute non-trivial software changes as reviewable sections with durable feature state, per-section contracts, independent implementation/review agents, two-clean-review section acceptance, automatic hard-cap re-decomposition, integration checkpoints, and a final cross-section gate. Use when any trigger applies: expected behavioral edits may exceed roughly 300 lines; more than three modules, packages, services, pages, or workflows are affected; the change crosses a high-risk semantic boundary; architecture or state ownership changes; the impact cone is difficult to bound; or a previous whole-change implementation/review failed to converge."
+description: "Plan and execute non-trivial software changes as reviewable sections with durable feature state, per-section contracts, independent implementation/review agents, single-clean-review section acceptance, automatic hard-cap re-decomposition, integration checkpoints, and a final cross-section gate. Use when any trigger applies: expected behavioral edits may exceed roughly 300 lines; more than three modules, packages, services, pages, or workflows are affected; the change crosses a high-risk semantic boundary; architecture or state ownership changes; the impact cone is difficult to bound; or a previous whole-change implementation/review failed to converge."
 ---
 
 # Sectioned Feature Development
 
-Develop one large feature as a sequence of bounded sections. Each section must be independently implementable, testable, reviewable, and reversible enough to diagnose. A section is provisionally accepted only after two consecutive fresh full `SECTION` reviews find no new material actionable issue. If five full review rounds fail to reach that condition, automatically preserve the failed attempt, escalate decomposition to [@sol_max](subagent://sol_max), split only the current section in `PLAN-FULL.md`, and reimplement the smaller descendants from the original section base through recursion depth `3`. Pause only before a split that would create depth `4+`, requesting Human approval for deeper recursion or a re-plan.
+Develop one large feature as a sequence of bounded sections. Each section must be independently implementable, testable, reviewable, and reversible enough to diagnose. A section is provisionally accepted when a fresh, coverage-complete full `SECTION` review finds no new material actionable issue; after a repair, one clean review of the repair delta plus its impact cone is sufficient unless a reset trigger fires. If five full review rounds fail to reach that condition, automatically preserve the failed attempt, escalate decomposition to a `[tier: plan]` subagent, split only the current section in `PLAN-FULL.md`, and reimplement the smaller descendants from the original section base through recursion depth `3`. Pause only before a split that would create depth `4+`, requesting Human approval for deeper recursion or a re-plan.
 
 ## Boundary and authority
 
@@ -16,7 +16,7 @@ Develop one large feature as a sequence of bounded sections. Each section must b
   - `EXECUTE_NO_COMMIT`: implement and validate without branch/commit operations.
   - `EXECUTE_WITH_COMMITS`: create/switch bounded feature or retry branches/worktrees and make section implementation/repair commits.
 - A planning or review request alone does not authorize commits.
-- If governing Custom Instructions explicitly delegate branch/commit authority to `$sectioned-feature-development`, that scoped delegation takes precedence over their general no-commit rule only for this workflow's bounded feature/retry branches and implementation/repair/snapshot commits.
+- If governing Custom Instructions explicitly delegate branch/commit authority to the `sectioned-feature-development` skill, that scoped delegation takes precedence over their general no-commit rule only for this workflow's bounded feature/retry branches and implementation/repair/snapshot commits.
 - Never push, merge, create a pull request, rewrite published history, clean, delete user work, or discard unrelated changes unless separately authorized.
 - A five-round review hard cap is **not** a user-decision point while the next split stays at recursion depth `1`–`3`. Do not ask whether to continue; run the automatic re-decomposition protocol and resume implementation.
 - Count recursive split depth from the original section: `S03` is depth `0`, `S03.1` is depth `1`, `S03.1.1` is depth `2`, and `S03.1.1.1` is depth `3`. Only pause when the next required split would create depth `4` or deeper; ask Human whether to authorize deeper recursion or re-plan the affected feature boundary.
@@ -80,10 +80,10 @@ PREFLIGHT
   -> LOCAL_VALIDATE
   -> COMMIT_IF_AUTHORIZED
   -> FULL_SECTION_REVIEW
-       -> CLEAN -> FULL_SECTION_REVIEW
+       -> CLEAN -> SECTION_ACCEPTED
        -> FINDINGS -> REPAIR -> COMMIT -> FULL_SECTION_REVIEW
        -> USER_DECISION -> BLOCK
-       -> ROUND_5_WITHOUT_2_CLEAN -> HARD_CAP_REPLAN
+       -> ROUND_5_WITHOUT_CLEAN -> HARD_CAP_REPLAN
   -> SECTION_ACCEPTED
   -> INTEGRATION_CHECKPOINT when triggered
   -> next SECTION_CONTRACT
@@ -94,7 +94,7 @@ PREFLIGHT
 HARD_CAP_REPLAN
   -> BACKUP_FAILED_TIP
   -> CHECK_RECURSION_DEPTH
-       -> DEPTH_1_TO_3 -> SOL_MAX_SPLIT_CURRENT_SECTION
+       -> DEPTH_1_TO_3 -> PLAN_TIER_SPLIT_CURRENT_SECTION
        -> DEPTH_4_PLUS -> HUMAN_APPROVAL_OR_REPLAN
   -> VALIDATE_REVISED_PLAN
   -> RETRY_FROM_ORIGINAL_SECTION_BASE
@@ -189,12 +189,13 @@ Ordinary implementation must not silently redefine the frozen section contract.
 
 Delegate exactly one current section.
 
-Default routing when these configured profiles exist:
+Default routing by role tier (map to the host's available sub-agent tiers; see
+the Model Routing Tiers section of the core instructions):
 
-- ordinary implementation: [@sol_medium](subagent://sol_medium);
-- high-risk implementation or repair: [@sol_high](subagent://sol_high);
-- section review: fresh [@sol_xhigh](subagent://sol_xhigh);
-- hard-cap section re-decomposition: [@sol_max](subagent://sol_max).
+- ordinary implementation: a `[tier: execute]` subagent;
+- high-risk implementation or repair: a `[tier: review]` subagent;
+- section review: a fresh `[tier: review]` subagent (reviewer context);
+- hard-cap section re-decomposition: a `[tier: plan]` subagent.
 
 The implementer receives repository rules, feature goal/invariants, current `PLAN.md`, section contract, exact `section_base`, and required checks. It must not implement future sections.
 
@@ -209,9 +210,9 @@ In `EXECUTE_WITH_COMMITS`, commit the coherent section implementation before rev
 
 ## Phase 5: Full section review loop
 
-Each **review round** is one fresh, independent, full `$code-review` invocation in `SECTION` mode over the current `section_base..section_head` plus the direct semantic impact cone.
+Each **review round** is one fresh, independent, full `code-review` skill invocation in `SECTION` mode over the current `section_base..section_head` plus the direct semantic impact cone.
 
-Use a clean [@sol_xhigh](subagent://sol_xhigh)  subagent for every counting round. Do not tell it whether previous rounds were clean and do not preload prior reviewer conclusions. Give it only the current section packet and output path:
+Use a clean `[tier: review]` reviewer subagent for every counting round. Do not tell it whether previous rounds were clean and do not preload prior reviewer conclusions. Give it only the current section packet and output path:
 
 ```text
 Review mode: SECTION
@@ -221,7 +222,7 @@ Feature contract: .agent-work/PLAN-FULL.md
 Section contract: .agent-work/sections/{ID}-CONTRACT.md
 Implementation handoff: .agent-work/sections/{ID}-HANDOFF.md
 Output: .agent-work/reviews/{ID}-SECTION-r{NN}.md
-Use: $code-review
+Use: the code-review skill
 ```
 
 Maintain:
@@ -231,23 +232,23 @@ review_round = 0
 clean_streak = 0
 ```
 
+`clean_streak` remains tracked in `FEATURE-STATE.md` for the record, but section acceptance no longer depends on it reaching `2`; one coverage-complete clean full review accepts.
+
 For at most five full review rounds:
 
 1. Increment `review_round` and run a fresh full `SECTION` review.
 2. Main agent inspects the report and current repository state.
 3. If a finding requires a genuine user-owned decision, record it and block immediately.
 4. If there is **no new material actionable finding**:
-   - increment `clean_streak`;
-   - if `clean_streak == 2`, mark the section `section-accepted`;
-   - otherwise run the next fresh full review.
+   - mark the section `section-accepted`. A single coverage-complete clean review is sufficient.
 5. If there is any new `Must Fix`, `Should Fix`, or blocking `Needs Decision` finding:
    - set `clean_streak = 0`;
    - deduplicate symptoms under stable root-cause IDs;
-   - send only agent-fixable findings from that round to a [@sol_high](subagent://sol_high)  repair agent;
+   - send only agent-fixable findings from that round to a `[tier: review]` repair agent;
    - run the relevant deterministic checks;
    - in `EXECUTE_WITH_COMMITS`, commit the repair;
    - update the handoff and `section_head`;
-   - run the next **fresh full `SECTION` review**, not a counting DELTA review.
+   - run the next **fresh full `SECTION` review** of the repair delta plus its impact cone, unless a reset trigger fires.
 
 The following do not break a clean streak unless they imply a material defect in the frozen section: repeated wording of an already-closed root cause, explicitly deferred future-section work, unsupported hypotheses, style preference, `Should Plan`, or bounded debt.
 
@@ -257,7 +258,7 @@ There is **no soft cap**.
 
 ### Five-round hard cap
 
-After review round 5, if the section has not reached two consecutive clean full reviews, do **not** ask the user whether to continue and do **not** start review round 6. Enter `HARD_CAP_REPLAN` automatically.
+After review round 5, if the section has not reached a clean, coverage-complete full review, do **not** ask the user whether to continue and do **not** start review round 6. Enter `HARD_CAP_REPLAN` automatically.
 
 ## Phase 6: Automatic hard-cap re-decomposition
 
@@ -270,22 +271,22 @@ Treat five-round non-convergence as evidence that the current section boundary i
 3. Create a backup branch **without prompting for authorization**:
 
 ```text
-codex/backup/{feature-slug}-{section-id}-g{generation}-{YYYYMMDD-HHMMSS}
+agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{YYYYMMDD-HHMMSS}
 ```
 
 Point it at `failed_tip`. Prefer creating the ref without switching branches.
-4. Write `.agent-work/replans/{section-id}-g{generation}-HARD-CAP.md` using the bundled template. Summarize, round by round, what each of the five reviews found, which root causes were repaired, what recurred, and why the section did not achieve two clean rounds.
+4. Write `.agent-work/replans/{section-id}-g{generation}-HARD-CAP.md` using the bundled template. Summarize, round by round, what each of the five reviews found, which root causes were repaired, what recurred, and why the section did not achieve a clean, coverage-complete round.
 
 The backup is evidence and a recovery point. Do not continue implementing on that failed code state.
 
-### 6.2 Escalate decomposition to `@sol_max`
+### 6.2 Escalate decomposition to a `[tier: plan]` subagent
 
-Before spawning `@sol_max`, calculate the depth of the descendants that the split would create.
+Before spawning the `[tier: plan]` decomposer, calculate the depth of the descendants that the split would create.
 
-- If the next descendants are depth `1`, `2`, or `3`, continue autonomously: invoke `@sol_max`, validate the split, create the retry branch/worktree, extract the first ready descendant, and resume implementation. Do not pause for approval or merely report progress.
+- If the next descendants are depth `1`, `2`, or `3`, continue autonomously: invoke the `[tier: plan]` subagent, validate the split, create the retry branch/worktree, extract the first ready descendant, and resume implementation. Do not pause for approval or merely report progress.
 - If the next descendants would be depth `4` or deeper, preserve the failed attempt as usual, record state `BLOCKED_RECURSION_DEPTH`, and pause. Ask Human to choose whether to authorize deeper recursion or re-plan the affected parent/feature boundary. Do not ask for approval at depth `0`–`3`.
 
-Spawn a clean [@sol_max](subagent://sol_max). Explicitly tell it:
+Spawn a clean `[tier: plan]` subagent. Explicitly tell it:
 
 - the currently failing section ID/title and its `section_base`;
 - the feature goal, invariants, and current `PLAN-FULL.md`;
@@ -299,13 +300,13 @@ Spawn a clean [@sol_max](subagent://sol_max). Explicitly tell it:
 - that descendants should use hierarchical lineage IDs such as `S03.1`, `S03.2`; if a descendant later fails, continue the hierarchy.
 - the current depth and maximum autonomous depth `3`; it must not propose depth `4+` descendants without recorded Human approval.
 
-The [@sol_max](subagent://sol_max) replan must use the five review histories as decomposition evidence: repeated bug classes should become explicit boundaries, invariants, oracles, or separate descendant sections rather than being copied as prose into one smaller-looking but semantically identical section.
+The `[tier: plan]` replan must use the five review histories as decomposition evidence: repeated bug classes should become explicit boundaries, invariants, oracles, or separate descendant sections rather than being copied as prose into one smaller-looking but semantically identical section.
 
 ### 6.3 Main-agent plan rewrite and validation
 
-After `@sol_max` returns:
+After the `[tier: plan]` subagent returns:
 
-1. Main agent inspects and, if necessary, normalizes the `PLAN-FULL.md` split. `@sol_max` proposes the decomposition; the main agent owns final artifact integrity.
+1. Main agent inspects and, if necessary, normalizes the `PLAN-FULL.md` split. The `[tier: plan]` subagent proposes the decomposition; the main agent owns final artifact integrity.
 2. Preserve the parent section as historical lineage with state `SPLIT_AFTER_HARD_CAP`; do not schedule it again.
 3. Validate the revised `PLAN-FULL.md` with `section_plan.py` and verify the dependency graph remains acyclic and every full-feature requirement remains covered.
 4. If the proposed split requires a new user-owned product decision, block only for that decision. Also block with `BLOCKED_RECURSION_DEPTH` when the next descendants would be depth `4+`. Otherwise, through depth `3`, do not ask for permission merely to continue after the hard cap.
@@ -320,11 +321,12 @@ Start the descendant sequence from the failed parent section's original `section
 - In `EXECUTE_WITH_COMMITS`, create a new retry branch/worktree from `section_base`. Prefer a new branch/worktree rather than resetting the failed branch.
 - Carry forward only orchestration artifacts required for the revised plan/state; do not carry failed product-code diffs.
 - If unrelated user changes make branch switching unsafe, leave the failed worktree untouched and create an isolated retry worktree from `section_base`.
+- Create retry worktrees under the repository-root `.worktrees/` workspace and register the retry task in `.worktrees/current-agents/` per the manual-git-worktrees skill.
 - Record the new retry path/branch in `FEATURE-STATE.md`.
 
 Then the **main agent** extracts the first dependency-ready descendant from revised `PLAN-FULL.md` into `.agent-work/PLAN.md` and resumes Phase 3 → Phase 5 with the normal implementer/reviewer agents.
 
-Hard-cap recovery is recursive through depth `3` without pausing. If `S03.1` itself reaches five rounds without two consecutive clean reviews, preserve that failed attempt, call [@sol_max](subagent://sol_max), split it into `S03.1.1`, `S03.1.2`, and retry those from `S03.1`'s own `section_base`. Apply the same autonomous process for depth-`3` descendants such as `S03.1.1.1`. If another failure would require depth `4`, preserve evidence and request Human approval for deeper recursion or a re-plan instead of splitting automatically.
+Hard-cap recovery is recursive through depth `3` without pausing. If `S03.1` itself reaches five rounds without a clean, coverage-complete full review, preserve that failed attempt, call a `[tier: plan]` subagent, split it into `S03.1.1`, `S03.1.2`, and retry those from `S03.1`'s own `section_base`. Apply the same autonomous process for depth-`3` descendants such as `S03.1.1.1`. If another failure would require depth `4`, preserve evidence and request Human approval for deeper recursion or a re-plan instead of splitting automatically.
 
 ## Phase 7: Integration checkpoints
 
@@ -332,11 +334,11 @@ Run a targeted checkpoint when a public contract, schema, permission model, stat
 
 Verify cross-section contracts and representative end-to-end paths without reopening every accepted local line. A checkpoint may invalidate an accepted section only when actual combined behavior disproves its frozen contract evidence.
 
-Parallelize only sections with accepted dependencies, distinct semantic owners/contracts, isolated worktrees, and deterministic integration order.
+Parallelize only sections with accepted dependencies, distinct semantic owners/contracts, isolated worktrees, and deterministic integration order. Parallel worktrees must follow the `.worktrees/current-agents/` registry conflict-check protocol (see the manual-git-worktrees skill).
 
 ## Phase 8: Final feature integration gate
 
-After all active leaf sections are accepted and all deferred items are resolved or explicitly approved, use a clean `$code-review` `INTEGRATION` review over `feature_base..feature_head`.
+After all active leaf sections are accepted and all deferred items are resolved or explicitly approved, use a clean `code-review` skill `INTEGRATION` review over `feature_base..feature_head`.
 
 Focus on what section reviews cannot prove alone:
 
@@ -363,13 +365,13 @@ Then run the deterministic full-feature validation suite and state final readine
 
 - One implementer works on one extracted section/descendant at a time.
 - Every counting review is a fresh full `SECTION` review from a clean reviewer context.
-- Two consecutive clean full reviews are required for section acceptance.
+- One coverage-complete clean full review is required for section acceptance; after repair, a clean review of the repair delta plus impact cone suffices unless a reset trigger fires.
 - Any material actionable finding resets the clean streak to zero.
 - Five full review rounds is a hard cap; there is no soft cap and no round 6.
-- Hard-cap recovery automatically backs up the failed tip and invokes [@sol_max](subagent://sol_max) for descendant depths `1`–`3`; it does not request continuation approval at those depths.
+- Hard-cap recovery automatically backs up the failed tip and invokes a `[tier: plan]` subagent for descendant depths `1`–`3`; it does not request continuation approval at those depths.
 - Only a split that would create recursion depth `4` or deeper pauses for Human approval to recurse further or re-plan. Depth `0`–`3` technical decomposition is never a pause point.
 - Reimplementation after a split starts from the failed parent section's original base, not from its repeatedly repaired code.
-- Failed-attempt commits are preserved on `codex/backup/***` and are not cherry-picked by default.
+- Failed-attempt commits are preserved on `agent-kit/backup/***` and are not cherry-picked by default.
 - A repair agent does not declare its own work accepted.
 - New user-owned semantics require a real decision; ordinary technical decomposition does not.
 - Section acceptance is provisional and cannot replace the final integration gate.

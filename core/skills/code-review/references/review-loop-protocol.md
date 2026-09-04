@@ -418,7 +418,7 @@ The agent must not close a finding because “I fixed it.” It must close it be
 For `SECTION` and `INTEGRATION` review packets, also follow `section-review-protocol.md`.
 
 ```text
-Review {working path}, [$code-review]({skill path}/SKILL.md)
+Review {working path}, [code-review]({skill path}/SKILL.md)
 ```
 
 Keep this prompt minimal to preserve independent variation. The reviewer gathers the repository context itself.
@@ -443,7 +443,7 @@ Reopen any finding whose acceptance criterion is not proven. Create new IDs only
 ### Fresh final verifier
 
 ```text
-Perform a fresh merge-readiness verification of {bounded change} in {working path} using [$code-review]({skill path}/SKILL.md).
+Perform a fresh merge-readiness verification of {bounded change} in {working path} using [code-review]({skill path}/SKILL.md).
 Start from the current repository, authoritative intent, and invariants. Independently inspect the highest-risk paths before reading prior review rationalizations. Verify current closure evidence and report any new material root-cause class.
 ```
 

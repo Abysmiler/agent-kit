@@ -1,11 +1,11 @@
 # Integration and Convergence Guide
 
-Use this guide to distinguish section acceptance from feature readiness and to interpret the two-clean-review / five-round hard-cap policy.
+Use this guide to distinguish section acceptance from feature readiness and to interpret the single-clean-review / five-round hard-cap policy.
 
 ## Contents
 
 1. [Review roles](#1-review-roles)
-2. [Two-clean section acceptance](#2-two-clean-section-acceptance)
+2. [Single-clean section acceptance](#2-single-clean-section-acceptance)
 3. [Five-round hard cap](#3-five-round-hard-cap)
 4. [Why hard-cap recovery splits instead of asking to continue](#4-why-hard-cap-recovery-splits-instead-of-asking-to-continue)
 5. [Integration checkpoints](#5-integration-checkpoints)
@@ -26,17 +26,17 @@ Possible local result:
 - no new material actionable finding;
 - blocked by a genuine decision/evidence gap.
 
-The parent workflow, not the individual reviewer, decides whether two consecutive clean rounds have been achieved.
+The parent workflow, not the individual reviewer, decides whether a clean, coverage-complete round has been achieved.
 
 ### Optional DELTA
 
-A targeted repair check may prove that one fix closes its finding and does not break its immediate impact cone. It is useful evidence but does not count toward the five full review rounds or two-clean streak.
+A targeted repair check may prove that one fix closes its finding and does not break its immediate impact cone. It is useful evidence but does not count toward the five full review rounds or the clean-review acceptance condition.
 
 ### INTEGRATION
 
 A cross-section review of the assembled feature after accepted active leaf sections compose on the actual feature head. It focuses on emergent behavior rather than replaying every section line.
 
-## 2. Two-clean section acceptance
+## 2. Single-clean section acceptance
 
 A section is provisionally accepted only when all are true:
 
@@ -44,11 +44,11 @@ A section is provisionally accepted only when all are true:
 - required checks pass or an external evidence blocker is explicit;
 - no unresolved `Must Fix`, unaccepted `Should Fix`, or blocking `Needs Decision` remains;
 - deferred work has an explicit later owner and does not make the current intermediate state invalid;
-- two consecutive fresh full `SECTION` reviews discover no new material actionable root cause.
+- one fresh, coverage-complete full `SECTION` review discovers no new material actionable root cause. After a repair, one clean review of the repair delta plus its impact cone is sufficient unless a reset trigger fires.
 
-### Clean streak rules
+### Clean streak record
 
-Initialize `clean_streak = 0`.
+Initialize `clean_streak = 0`. It remains tracked in `FEATURE-STATE.md` for the record, but acceptance no longer depends on it reaching any particular value.
 
 - Clean full review -> `clean_streak += 1`.
 - New material actionable finding -> `clean_streak = 0`.
@@ -57,7 +57,7 @@ Initialize `clean_streak = 0`.
 - Repeated wording of an already-closed root cause -> does not reset by itself.
 - Unsupported hypothesis/style preference/non-blocking debt -> does not reset by itself.
 
-The second counting reviewer must not be primed with “the previous round was clean” or prior persuasive conclusions.
+The counting reviewer must not be primed with “the previous round was clean” or prior persuasive conclusions.
 
 ## 3. Five-round hard cap
 
@@ -65,34 +65,29 @@ Per active section attempt:
 
 - Maximum counting full `SECTION` reviews: **5**.
 - Soft cap: **none**.
-- Acceptance condition: two consecutive clean counting reviews within those five.
+- Acceptance condition: a clean, coverage-complete counting review within those five.
 - Round 6 is forbidden for the same section attempt.
 
 Examples:
 
 ```text
-R1 findings -> repair
-R2 clean
-R3 clean
-=> accepted in 3 rounds
+R1 clean
+=> accepted in 1 round
 ```
 
 ```text
 R1 findings -> repair
-R2 findings -> repair
-R3 clean
-R4 findings -> repair
-R5 clean
-=> not accepted; hard-cap split, because clean streak is only 1
+R2 clean review of the repair delta plus impact cone
+=> accepted in 2 rounds
 ```
 
 ```text
 R1 findings -> repair
 R2 findings -> repair
 R3 findings -> repair
-R4 clean
-R5 clean
-=> accepted at the hard boundary
+R4 findings -> repair
+R5 findings -> repair
+=> not accepted; hard-cap split, because no round was clean
 ```
 
 ## 4. Why hard-cap recovery splits instead of asking to continue
@@ -111,9 +106,9 @@ Common evidence patterns:
 
 Recovery therefore:
 
-1. preserves the failed code state on `codex/backup/***`;
+1. preserves the failed code state on `agent-kit/backup/***`;
 2. summarizes all five review rounds;
-3. asks `@sol_max` to re-decompose only that section;
+3. asks a `[tier: plan]` subagent to re-decompose only that section;
 4. validates the new descendant plan;
 5. restarts implementation from the failed parent's original `section_base`.
 
@@ -210,7 +205,7 @@ Require the user/accountable owner for:
 Do not require user approval merely to:
 
 - create the hard-cap backup branch;
-- invoke `@sol_max`;
+- invoke the `[tier: plan]` decomposer;
 - split a technical section;
 - create the retry branch/worktree;
 - extract the first descendant and resume implementation.

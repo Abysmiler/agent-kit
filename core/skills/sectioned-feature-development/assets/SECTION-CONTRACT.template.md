@@ -12,9 +12,9 @@
 - Section base: `<commit or fingerprint>`
 - Dependency heads: `<Syy=commit>`
 - Plan fingerprint: `<sha256>`
-- Implementer profile: `<profile>`
-- Review profile: `sol_xhigh`
-- Acceptance rule: `2 consecutive clean full SECTION reviews within 5 rounds`
+- Implementer tier: `<tier: execute or tier: review>`
+- Reviewer tier: `tier: review` (fresh reviewer context)
+- Acceptance rule: `a clean, coverage-complete full SECTION review within 5 rounds`
 
 ## Goal
 
@@ -77,4 +77,4 @@
 - Scope materially expands.
 - Base/head changes outside tracked implementation or repair.
 
-- Five full SECTION review rounds without two consecutive clean rounds retires this attempt and triggers automatic `@sol_max` re-decomposition (profile `sol_max`).
+- Five full SECTION review rounds without a clean, coverage-complete round retires this attempt and triggers automatic re-decomposition by a `[tier: plan]` subagent.

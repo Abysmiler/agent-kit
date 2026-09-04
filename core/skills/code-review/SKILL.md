@@ -10,7 +10,7 @@ Review one bounded change set with senior-engineer judgment. Optimize for real m
 ## Boundary
 
 - Review the specified pull request, commit range, staged/unstaged diff, or explicitly named change set.
-- Do not expand into a periodic whole-repository audit; use `$code-audit` for that.
+- Do not expand into a periodic whole-repository audit; use the `code-audit` skill for that.
 - Review only by default. Repair findings only when the user or orchestrator explicitly authorizes repair.
 - Treat agent-authored code, summaries, PR descriptions, test claims, and prior review conclusions as plausible but untrusted.
 - Preserve user work. Do not reset, clean, merge, approve, push, post comments, or alter branch history unless explicitly asked.
@@ -219,7 +219,7 @@ A round counts as progress only if it closes a finding, proves a candidate false
 For an independent discovery reviewer, pass only:
 
 ```text
-Review {working path}, [$code-review]({user home dir}/.codex/skills/code-review/SKILL.md)
+Review {working path}, [code-review]({agent host skills directory}/code-review/SKILL.md)
 ```
 
 Do not leak suspected issues or prior conclusions into the discovery prompt unless the user explicitly requests a targeted pass.
