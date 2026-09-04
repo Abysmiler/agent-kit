@@ -43,7 +43,7 @@ agent-kit/
 ├── scripts/
 │   ├── sync.py               # 双目标分发（内联测试：python scripts/sync.py test）
 │   └── section_plan.py       # section 计划校验/提取工具
-└── docs/superpowers/         # 设计文档与实施计划
+└── README.md
 ```
 
 ## 能力地图（8 技能）
