@@ -224,18 +224,22 @@ def deploy_after_pull(
     dry_run: bool = False,
     target: str = "all",
 ) -> bool:
-    try:
-        did_update = pull_repository(repo)
-    except SyncError as exc:
-        if not force:
-            raise
-        print(f"git pull did not complete ({exc}); syncing because --force was set.")
+    if dry_run:
+        # A preview must never be blocked by (or depend on) a git pull.
+        print("Dry run: skipping git pull; nothing will be written.")
     else:
-        if not did_update and not force:
-            print("No git updates found; exiting without syncing.")
-            return False
-        if force:
-            print("Syncing after git pull because --force was set.")
+        try:
+            did_update = pull_repository(repo)
+        except SyncError as exc:
+            if not force:
+                raise
+            print(f"git pull did not complete ({exc}); syncing because --force was set.")
+        else:
+            if not did_update and not force:
+                print("No git updates found; exiting without syncing.")
+                return False
+            if force:
+                print("Syncing after git pull because --force was set.")
 
     results = sync_all(
         repo,
@@ -246,7 +250,8 @@ def deploy_after_pull(
     )
     for name, synced in results.items():
         home = {"codex": codex_home, "claude": claude_home}[name].expanduser()
-        print(f"Synced {len(synced)} item(s) into {home} (target: {name}):")
+        prefix = "Would sync" if dry_run else "Synced"
+        print(f"{prefix} {len(synced)} item(s) into {home} (target: {name}):")
         for item in synced:
             print(f"  - {item}")
     return True
@@ -453,10 +458,70 @@ class TestSyncTargets(unittest.TestCase):
             "old",
         )
 
+    def test_sync_claude_target_only(self):
+        codex_home = Path(self.tmp.name) / "never-codex"
+        claude_home = Path(self.tmp.name) / "claude-home"
+        results = sync_all(
+            self.repo,
+            codex_home=codex_home,
+            claude_home=claude_home,
+            dry_run=False,
+            target="claude",
+        )
+        self.assertIn("CLAUDE.md", results["claude"])
+        self.assertTrue((claude_home / "CLAUDE.md").exists())
+        self.assertTrue((claude_home / "skills" / "demo" / "SKILL.md").exists())
+        # codex target untouched
+        self.assertFalse(codex_home.exists())
+
+
+class TestDeployAfterPullDryRun(unittest.TestCase):
+    """Regression: --dry-run must not be blocked by the git-pull gate.
+
+    The sync_all-level tests bypass deploy_after_pull entirely; these cases
+    exercise the CLI gate layer against a repo that has no git remote at all.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.repo = Path(self.tmp.name) / "repo"
+        (self.repo / "core" / "skills" / "demo").mkdir(parents=True)
+        (self.repo / "core" / "skills" / "demo" / "SKILL.md").write_text("x", encoding="utf-8")
+        (self.repo / "core" / "INSTRUCTIONS.md").write_text("CORE", encoding="utf-8")
+        codex_dir = self.repo / "adapters" / "codex"
+        codex_dir.mkdir(parents=True)
+        (codex_dir / "AGENTS.md").write_text(
+            "# Codex\n\n<!-- AGENT-KIT:CORE:START -->\nold\n<!-- AGENT-KIT:CORE:END -->\n",
+            encoding="utf-8",
+        )
+        claude_dir = self.repo / "adapters" / "claude"
+        claude_dir.mkdir(parents=True)
+        (claude_dir / "CLAUDE.md").write_text(
+            "# Claude\n\n<!-- AGENT-KIT:CORE:START -->\nold\n<!-- AGENT-KIT:CORE:END -->\n",
+            encoding="utf-8",
+        )
+
+    def test_dry_run_works_without_git_remote(self):
+        home = Path(self.tmp.name) / "home"
+        # No git repo at all: pull would raise, dry-run must still preview.
+        deployed = deploy_after_pull(
+            self.repo,
+            codex_home=home,
+            claude_home=home,
+            dry_run=True,
+        )
+        self.assertTrue(deployed)
+        self.assertFalse(home.exists())
+        self.assertEqual(
+            extract_core_block((self.repo / "adapters" / "codex" / "AGENTS.md").read_text(encoding="utf-8")),
+            "old",
+        )
+
 
 def _load_tests(loader: unittest.TestLoader, tests: list, pattern: str):
     suite = unittest.TestSuite()
-    for cls in (TestRenderCoreBlock, TestReplaceFile, TestSyncTargets):
+    for cls in (TestRenderCoreBlock, TestReplaceFile, TestSyncTargets, TestDeployAfterPullDryRun):
         suite.addTests(loader.loadTestsFromTestCase(cls))
     return suite
 

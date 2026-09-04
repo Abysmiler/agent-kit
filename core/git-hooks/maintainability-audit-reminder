@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-if [ "${AGENTKIT_MAINTAINABILITY_AUDIT_REMINDER:-1}" = "0" ]; then
+if [ "${AGENTKIT_MAINTAINABILITY_AUDIT_REMINDER:-1}" = "0" ] ||
+  [ "${CODEX_MAINTAINABILITY_AUDIT_REMINDER:-1}" = "0" ]; then
   exit 0
 fi
 
