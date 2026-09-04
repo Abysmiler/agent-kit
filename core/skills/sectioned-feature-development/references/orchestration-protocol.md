@@ -174,11 +174,21 @@ for section in dependency_order(active_leaf_sections):
     while review_round < 5:
         review_round += 1
         section_head = current_head()
-        report = run_clean_full_SECTION_review(
-            section_base,
-            section_head,
-            output=f"{section}-SECTION-r{review_round:02d}.md"
-        )
+        if review_round == 1:
+            report = run_clean_full_SECTION_review(
+                section_base,
+                section_head,
+                output=f"{section}-SECTION-r{review_round:02d}.md"
+            )
+        else:
+            # After a repair, the acceptance review is scoped to the repair
+            # delta plus its impact cone (see integration-and-convergence.md).
+            report = run_post_repair_review(
+                repair_base,
+                section_head,
+                cone=direct_semantic_impact_cone(),
+                output=f"{section}-SECTION-r{review_round:02d}.md"
+            )
 
         findings = main_agent_validate_and_deduplicate(report)
 
@@ -194,6 +204,7 @@ for section in dependency_order(active_leaf_sections):
 
         clean_streak = 0
         fixable = findings.agent_fixable_material_items()
+        repair_base = section_head
         run_repair(fixable)
         inspect_repo_and_handoff()
         run_relevant_checks()

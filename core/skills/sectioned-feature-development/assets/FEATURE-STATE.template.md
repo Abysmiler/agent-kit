@@ -12,7 +12,7 @@
 - Parent lineage: `<none or Sxx -> Sxx.n>`
 - Replan generation: `<0+>`
 - Review round: `<0..5>`
-- Clean streak: `<0..2>`
+- Clean streak: `<0..1>` (record only; a single clean coverage-complete review accepts)
 - Next action: `<exact next gate>`
 - Last updated: `<timestamp>`
 

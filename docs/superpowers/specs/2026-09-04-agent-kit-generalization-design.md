@@ -45,7 +45,7 @@ agent-kit/
 ├── adapters/
 │   ├── codex/
 │   │   ├── AGENTS.md            # 构建产物：Codex 入口 + 展开的 core 规则
-│   │   └── agents/              # 4 个 toml（修正 sol_high 名实不符）
+│   │   └── agents/              # 3 个 tier toml（原 4 档合并为三档，根治 sol_high 名实不符）
 │   └── claude/
 │       └── CLAUDE.md            # 构建产物：Claude 入口 + 展开的 core 规则
 ├── scripts/
@@ -107,7 +107,7 @@ agent-kit/
 
 | 技能 | 手术 |
 |---|---|
-| sectioned-feature-development | (a) 收敛准则统一：SKILL.md、integration-and-convergence.md 中"2 连干净"全部改为"单次覆盖完整的干净评审即可接受（无修复时）；有修复时审 repair delta + 影响锥后干净即可"；(b) worktree 约定统一：retry worktree 纳入 `.worktrees/` + current-agents 注册表；(c) `agents/openai.yaml` → `meta.yaml`（通用元信息）；(d) 去 sol_* 引用改 tier 标记 |
+| sectioned-feature-development | (a) 收敛准则统一：SKILL.md、integration-and-convergence.md 中"2 连干净"全部改为"单次覆盖完整的干净评审即可接受（无修复时）；有修复时审 repair delta + 影响锥后干净即可"；(b) worktree 约定统一：retry worktree 纳入 `.worktrees/` + current-agents 注册表；(c) 删除 `agents/openai.yaml`（Codex 专属 UI 元数据，通用版不保留——实施时决定直接删除而非转换为 meta.yaml）；(d) 去 sol_* 引用改 tier 标记 |
 | code-review | section-review-protocol.md 的"单次干净"表述成为权威准则；去 sol_*；其余不动 |
 | code-audit | anti-bloat.md 删私人路径；去 sol_*；其余不动 |
 | second-pass-debugging | 仅去 `$` 语法 |

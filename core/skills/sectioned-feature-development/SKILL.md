@@ -248,7 +248,7 @@ For at most five full review rounds:
    - run the relevant deterministic checks;
    - in `EXECUTE_WITH_COMMITS`, commit the repair;
    - update the handoff and `section_head`;
-   - run the next **fresh full `SECTION` review** of the repair delta plus its impact cone, unless a reset trigger fires.
+   - run the next **fresh `SECTION` review** scoped to the repair delta plus its impact cone, unless a reset trigger fires.
 
 The following do not break a clean streak unless they imply a material defect in the frozen section: repeated wording of an already-closed root cause, explicitly deferred future-section work, unsupported hypotheses, style preference, `Should Plan`, or bounded debt.
 

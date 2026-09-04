@@ -75,7 +75,9 @@ agent-kit/
 | `tier: plan` | 完整计划、硬帽重分解 | Opus 最高档 | tier-plan profile |
 
 Codex 的三档 profile 位于 `adapters/codex/agents/*.toml`（模型名默认
-gpt-5.6-sol，按需替换）。宿主无档位概念时，用全新上下文 + 提高谨慎度代替。
+gpt-5.6-sol，按需替换）。sync.py 不自动安装它们——Codex 用户需手动复制：
+`cp adapters/codex/agents/*.toml ~/.codex/agents/`。宿主无档位概念时，
+用全新上下文 + 提高谨慎度代替。
 
 ## Git Hook 审计提醒
 

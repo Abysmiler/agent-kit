@@ -30,7 +30,7 @@ The parent workflow, not the individual reviewer, decides whether a clean, cover
 
 ### Optional DELTA
 
-A targeted repair check may prove that one fix closes its finding and does not break its immediate impact cone. It is useful evidence but does not count toward the five full review rounds or the clean-review acceptance condition.
+A targeted repair check may prove that one fix closes its finding and does not break its immediate impact cone. It is useful evidence, but an optional internal DELTA check during repair does not by itself accept the section; acceptance still requires a counting review.
 
 ### INTEGRATION
 
