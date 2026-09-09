@@ -11,10 +11,23 @@ These instructions are agent-agnostic. They are loaded by both CLAUDE.md
 - Write Implementation Plans in Chinese by default, unless I explicitly ask for English or another language.
 - When asked `Please review my uncommitted changes`, reply also in Chinese.
 
+## Repository Boundaries
+
+- Git is the user's personal code-management repository. SVN is the team's code repository; keep them strictly separate.
+- Never execute any SVN command, including checkout, update, status, diff, log, add, or commit.
+- Never read, modify, or submit SVN code or an SVN working copy.
+
 ## Scope And Project Setup
 
-- If an existing repository already has project-specific rules, follow them.
+- If an existing repository already has project-specific rules, read and follow them.
+- Before starting a coding task, check whether the current project is inside a local Git repository.
+- If no local Git repository exists, ask whether the user wants to create one. Do not create it or start coding until the user confirms.
+- File reading, problem analysis, and requirements discussion may proceed without a Git repository.
 - When a reusable project-specific method emerges, update the relevant repo-level skill directory (for Claude Code: `.claude/skills/`; for Codex: `.agents/skills/`).
+
+## Environment
+
+- Visual Studio 2008 is installed at `E:\Dev\VisualStudio2008`; prefer this environment for Visual Studio 2008 projects.
 
 ## Model Routing Tiers
 
@@ -32,15 +45,36 @@ instructions to be maximally careful and skeptical.
 
 ## Implementation Quality
 
+- Before adding behavior or abstractions, inspect existing implementations, project conventions, standard-library capabilities, and installed dependencies; extend existing paths instead of creating parallel implementations.
+- Use a local change when it can solve the task; do not perform a broad rewrite or unrelated cleanup.
+- Do not add features or abstractions for requirements the user has not requested.
 - When changing functionality, add or update meaningful unit tests unless the change is purely mechanical or documentation-only.
 - Cover real behavior and meaningful edge cases; do not add assertions that only execute code without verifying outcomes.
-- Run the relevant checks before finishing when the environment permits it. If checks cannot run, explain the blocker clearly.
+- Run the relevant tests, builds, or checks before finishing when the environment permits it. If a check cannot run, explain the specific blocker.
 - For browser or UI work, use the repository's existing validation workflow when it exists.
-- Before adding behavior that may span multiple pages, modules, or workflows, inspect project docs and existing implementations for a documented shared convention or reusable entry point. Prefer extending that path and avoid creating parallel implementations.
+
+## Logging And Sensitive Information
+
+- Log only necessary metadata, such as the called component, duration, status code, and error code.
+- Mask sensitive fields, including phone numbers, email addresses, identity-document numbers, tokens, monetary amounts, and names.
+- Use structured logging fields rather than embedding sensitive values in free-form messages.
+
+## Git Commit Identity
+
+- For each authorized Git commit, use `git -c user.name=lynx -c user.email=lynx.lin@fortiortech.com commit ...`.
+- Apply this identity only to the current command; do not write it to global Git configuration.
+- Authorization to commit does not authorize pushing.
 
 ## Safety
 
-- Preserve user work. Do not remove, reset, or revert changes I did not ask you to remove.
+- Before editing a file, read the relevant project documentation and existing code, and follow established project conventions.
+- Before editing, inspect the worktree for existing uncommitted user changes and notify the user when any exist.
+- Preserve user work: do not overwrite, revert, delete, or include those changes in this task without explicit user consent.
+- Explain intended file changes and obtain confirmation unless the concrete task is explicitly authorized; modify only task-related files.
+- Deleting, overwriting, renaming, bulk replacing, or other potentially data-losing actions require separate explicit consent.
+- Before adding, upgrading, or removing a dependency, explain the reason and impact and obtain user confirmation.
+- Do not deploy, release, upload files, or modify external systems unless the user explicitly requests it.
+- Before `git reset`, `git clean`, `git merge`, `git rebase`, or history rewriting, obtain separate explicit user consent.
 - Before destructive operations such as `git clean`, `git reset`, or equivalent commands, run the appropriate dry run and inspect the output.
 - Do not commit, push, or create pull requests unless I explicitly ask for that action.
 - Scoped exception: when the sectioned-feature-development skill is triggered for an implementation task, it is explicitly authorized to create/switch the feature branch and make the bounded implementation and repair commits required by that skill without separate per-commit approval. This exception does not authorize push, merge, pull-request creation, history rewriting, reset, clean, or deletion of user work.
