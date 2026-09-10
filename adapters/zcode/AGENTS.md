@@ -17,12 +17,6 @@ These instructions are agent-agnostic. They are loaded by CLAUDE.md
 - Write Implementation Plans in Chinese by default, unless I explicitly ask for English or another language.
 - When asked `Please review my uncommitted changes`, reply also in Chinese.
 
-## Repository Boundaries
-
-- Git is the user's personal code-management repository. SVN is the team's code repository; keep them strictly separate.
-- Never execute any SVN command, including checkout, update, status, diff, log, add, or commit.
-- Never read, modify, or submit SVN code or an SVN working copy.
-
 ## Scope And Project Setup
 
 - If an existing repository already has project-specific rules, read and follow them.
@@ -31,20 +25,15 @@ These instructions are agent-agnostic. They are loaded by CLAUDE.md
 - File reading, problem analysis, and requirements discussion may proceed without a Git repository.
 - When a reusable project-specific method emerges, update the relevant repo-level skill directory (for Claude Code: `.claude/skills/`; for Codex: `.agents/skills/`; for ZCode: `.zcode/skills/`).
 
-## Environment
-
-- Visual Studio 2008 is installed at `E:\Dev\VisualStudio2008`; prefer this environment for Visual Studio 2008 projects.
-
 ## File Encoding
 
-Most local projects use GBK (CP936), including the VS2008 C/C++ codebase. Encoding
-damage is usually silent, so follow these rules:
+Encoding damage is usually silent, so follow these rules:
 
 - Detect a file's existing encoding before editing it, and write it back in that same encoding. Never convert a file's encoding, or "unify" a project's encoding, as a side effect of an unrelated task.
-- New files inside an existing GBK project must be GBK. Only brand-new standalone projects default to UTF-8 without BOM.
-- Never write BOM-less UTF-8 into MSVC / Visual Studio 2008 C/C++ sources. MSVC decodes a BOM-less file with the system ANSI code page (CP936 here), so Chinese comments become mojibake and Chinese string literals are corrupted in the compiled binary; VS2008 also has no `/utf-8` switch. Use UTF-8 with BOM, GBK, or plain ASCII instead.
-- Emoji, rare CJK characters, and box-drawing or status symbols cannot be represented in GBK. Keep non-ASCII text inside comments where possible, and keep string literals ASCII unless the project already requires otherwise.
-- Pass an explicit encoding whenever a program reads or writes text; do not rely on platform defaults. Python `open()` uses the locale encoding (CP936), Windows PowerShell 5.1 defaults `Out-File` to UTF-16LE and adds a BOM for `-Encoding UTF8`, while PowerShell 7+ writes UTF-8 without BOM.
+- New files inside an existing project follow that project's prevailing encoding; only brand-new standalone projects default to UTF-8 without BOM.
+- Legacy toolchains that decode BOM-less files with the system ANSI code page (for example MSVC without a `/utf-8` switch) silently corrupt non-ASCII comments and string literals. In such a project, write UTF-8 with BOM, the project's legacy code page, or plain ASCII.
+- Never introduce characters the project's encoding cannot represent (in GBK: emoji, rare CJK characters, box-drawing and status symbols). Keep non-ASCII text inside comments where possible, and keep string literals ASCII unless the project already requires otherwise.
+- Pass an explicit encoding whenever a program reads or writes text; do not rely on platform defaults. Python `open()` uses the locale encoding, Windows PowerShell 5.1 defaults `Out-File` to UTF-16LE and adds a BOM for `-Encoding UTF8`, while PowerShell 7+ writes UTF-8 without BOM.
 - Preserve line endings (CRLF/LF) together with the encoding; do not let a tool rewrite an entire file for a small edit.
 - If detection is ambiguous, ask instead of guessing. A genuine conversion is a separate, explicit change made with the user's agreement.
 
@@ -77,12 +66,6 @@ instructions to be maximally careful and skeptical.
 - Log only necessary metadata, such as the called component, duration, status code, and error code.
 - Mask sensitive fields, including phone numbers, email addresses, identity-document numbers, tokens, monetary amounts, and names.
 - Use structured logging fields rather than embedding sensitive values in free-form messages.
-
-## Git Commit Identity
-
-- For each authorized Git commit, use `git -c user.name=lynx -c user.email=lynx.lin@fortiortech.com commit ...`.
-- Apply this identity only to the current command; do not write it to global Git configuration.
-- Authorization to commit does not authorize pushing.
 
 ## Safety
 

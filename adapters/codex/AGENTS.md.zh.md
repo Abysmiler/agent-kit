@@ -18,12 +18,6 @@
 - 默认使用中文撰写实施计划（Implementation Plan），除非我明确要求使用英文或其他语言。
 - 当被要求 `Please review my uncommitted changes` 时，同样使用中文回复。
 
-## 仓库边界
-
-- Git 是用户本人用于代码管理的仓库，SVN 是组内代码库，二者必须严格区分。
-- 禁止执行任何 SVN 命令，包括 checkout、update、status、diff、log、add 和 commit。
-- 禁止阅读、修改或提交 SVN 代码及 SVN 工作副本。
-
 ## 项目设置与工作准备
 
 - 如果现有仓库已有项目专属规则，先阅读并遵守这些规则。
@@ -32,20 +26,15 @@
 - 文件阅读、问题分析和需求讨论不受 Git 仓库限制。
 - 当出现可复用的项目专属方法时，更新相应的仓库级技能目录（Claude Code：`.claude/skills/`；Codex：`.agents/skills/`；ZCode：`.zcode/skills/`）。
 
-## 环境
-
-- 本机安装有 Visual Studio 2008，路径为 `E:\Dev\VisualStudio2008`；涉及 VS2008 工程时优先使用该环境。
-
 ## 文件编码
 
-本机大部分项目采用 GBK（CP936），包括 VS2008 的 C/C++ 工程。编码损坏通常没有明显提示，
-因此遵守以下规则：
+编码损坏通常没有明显提示，因此遵守以下规则：
 
 - 编辑文件前先探测其现有编码，并按同一编码写回。禁止在无关任务中顺带转换文件编码，或"统一"整个项目的编码。
-- 已有 GBK 工程内新增的文件必须是 GBK。只有全新的独立项目才默认使用无 BOM 的 UTF-8。
-- 禁止把无 BOM 的 UTF-8 写入 MSVC / Visual Studio 2008 的 C/C++ 源文件。MSVC 会按系统 ANSI 代码页（本机为 CP936）解释无 BOM 文件，导致中文注释乱码、中文字符串字面量在编译产物中损坏；VS2008 也没有 `/utf-8` 开关。应改用带 BOM 的 UTF-8、GBK 或纯 ASCII。
-- Emoji、生僻字、制表与状态符号无法用 GBK 表示。非 ASCII 文本尽量只出现在注释中；除非项目已有约定，字符串字面量保持 ASCII。
-- 程序读写文本时必须显式指定编码，不要依赖平台默认值：Python `open()` 使用 locale 编码（CP936），Windows PowerShell 5.1 的 `Out-File` 默认 UTF-16LE、`-Encoding UTF8` 会写入 BOM，而 PowerShell 7+ 写出无 BOM 的 UTF-8。
+- 已有工程内新增的文件沿用该项目现有编码。只有全新的独立项目才默认使用无 BOM 的 UTF-8。
+- 按系统 ANSI 代码页解释无 BOM 文件的旧工具链（例如没有 `/utf-8` 开关的 MSVC）会静默损坏非 ASCII 注释与字符串字面量。在这类工程中改用带 BOM 的 UTF-8、项目原有代码页或纯 ASCII。
+- 不得引入项目编码无法表示的字符（如 GBK 中的 Emoji、生僻字、制表与状态符号）。非 ASCII 文本尽量只出现在注释中；除非项目已有约定，字符串字面量保持 ASCII。
+- 程序读写文本时必须显式指定编码，不要依赖平台默认值：Python `open()` 使用 locale 编码，Windows PowerShell 5.1 的 `Out-File` 默认 UTF-16LE、`-Encoding UTF8` 会写入 BOM，而 PowerShell 7+ 写出无 BOM 的 UTF-8。
 - 除编码外还要保留换行符（CRLF/LF）；不要为了一处小改动让工具重写整个文件。
 - 编码探测结果不明确时先询问，不要猜测。确需转换编码时，作为独立的显式改动并在用户同意下进行。
 
@@ -77,12 +66,6 @@
 - 日志只记录必要元数据，例如调用对象、用时、状态码和错误码。
 - 手机号、邮箱、身份证、token、金额、姓名等敏感字段必须脱敏。
 - 使用结构化日志字段，不把敏感值直接写入自由文本消息。
-
-## Git 提交身份
-
-- 每次获准的 Git 提交使用 `git -c user.name=lynx -c user.email=lynx.lin@fortiortech.com commit ...`。
-- 身份仅对当次命令生效，不写入 Git 全局配置。
-- 授权提交不等于授权推送。
 
 ## 安全
 
