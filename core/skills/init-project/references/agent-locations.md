@@ -16,6 +16,17 @@ Avoid inventing parallel conventions; write to the locations each host reads.
 - Project skills: `.agents/skills/<name>/SKILL.md`
 - User-level skills: `~/.codex/skills/<name>/SKILL.md`
 
+## ZCode
+
+- User-level instructions: `~/.zcode/AGENTS.md` (not `CLAUDE.md`)
+- Project-level instructions: `AGENTS.md` at repository root; shared with Codex when both are targeted
+- Project skills: `.zcode/skills/<name>/SKILL.md`; also reads `.agents/skills/`
+- User-level skills: `~/.zcode/skills/<name>/SKILL.md`; also reads `~/.agents/skills/`
+- User configuration: `~/.zcode/cli/config.json`; project configuration: `.zcode/config.json` or `zcode.json`. These are not distributed by agent-kit.
+- User instructions load before project instructions. Skills load user scope before project scope, with `.zcode` before `.agents` within a scope; the first same-named skill wins. Avoid duplicate copies.
+
+Verified against ZCode's bundled `zcode-guide` 0.1.0 configuration guide.
+
 ## Shared (host-agnostic)
 
 - Working state: `.agent-work/` (plans, section artifacts, debug notes, audit ledgers)

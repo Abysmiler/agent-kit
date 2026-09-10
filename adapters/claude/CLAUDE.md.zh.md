@@ -9,8 +9,8 @@
 # Agent Kit 核心指令
 
 本指令与具体代理无关。它们通过 `scripts/sync.py` 渲染的标记块，被 CLAUDE.md
-（Claude Code）和 AGENTS.md（Codex）共同加载。不要编辑渲染出的副本；请编辑本文件并重新运行
-`python scripts/sync.py --force`。
+（Claude Code）和 AGENTS.md（Codex、ZCode）共同加载。不要编辑渲染出的副本；请编辑本文件并重新运行
+`python scripts/sync.py --apply`。
 
 ## 语言
 
@@ -30,7 +30,7 @@
 - 开始编码任务前，先检查当前工程是否位于本地 Git 仓库中。
 - 如果不存在本地 Git 仓库，先询问用户是否创建；未经用户确认，不得创建仓库或开始编码。
 - 文件阅读、问题分析和需求讨论不受 Git 仓库限制。
-- 当出现可复用的项目专属方法时，更新相应的仓库级技能目录（Claude Code：`.claude/skills/`；Codex：`.agents/skills/`）。
+- 当出现可复用的项目专属方法时，更新相应的仓库级技能目录（Claude Code：`.claude/skills/`；Codex：`.agents/skills/`；ZCode：`.zcode/skills/`）。
 
 ## 环境
 
@@ -41,11 +41,11 @@
 按角色档位（tier）路由子代理工作，而不是按工具专属的 profile 名称路由。将档位
 映射为当前代理宿主提供的任何等价机制：
 
-| 档位 | 用途 | Claude Code 映射 | Codex 映射 |
-|---|---|---|---|
-| `tier: execute` | 机械性执行、常规实现 | 默认模型（Sonnet 级） | regular profile |
-| `tier: review` | 审查、修复、高风险实现 | Opus 级子代理或全新的高投入上下文 | high reasoning-effort profile |
-| `tier: plan` | 完整计划、硬上限后的重新分解 | 最高投入的 Opus 级 | max reasoning-effort profile |
+| 档位 | 用途 | Claude Code 映射 | Codex 映射 | ZCode 映射 |
+|---|---|---|---|---|
+| `tier: execute` | 机械性执行、常规实现 | 默认模型（Sonnet 级） | regular profile | 已配置的默认模型 |
+| `tier: review` | 审查、修复、高风险实现 | Opus 级子代理或全新的高投入上下文 | high reasoning-effort profile | 全新审查上下文；可用时提高推理投入 |
+| `tier: plan` | 完整计划、硬上限后的重新分解 | 最高投入的 Opus 级 | max reasoning-effort profile | 全新规划上下文；采用可用的最高投入 |
 
 当宿主没有档位概念时，用全新上下文，并附加"保持最大程度谨慎与怀疑"的明确指示来替代。
 
@@ -120,6 +120,6 @@
 
 ## Claude 专属说明
 
-- `python scripts/sync.py` 运行后，技能位于 `~/.claude/skills/`。
+- `python scripts/sync.py --apply` 运行后，技能位于 `~/.claude/skills/`。
 - 档位映射：`tier: execute` -> 默认模型；`tier: review` -> Opus 级子代理；
   `tier: plan` -> 最高投入的 Opus 级。

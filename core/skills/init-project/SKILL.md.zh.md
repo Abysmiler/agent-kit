@@ -2,7 +2,7 @@
 
 ---
 name: init-project
-description: Initialize or retrofit a repository with agent-native workflow files for Claude Code and/or Codex. Use when the user asks to set up, bootstrap, or dry-run project-level agent configuration, including CLAUDE.md, AGENTS.md, project-level skills directories, and optional git-hook maintainability audit reminders.
+description: Initialize or retrofit a repository with agent-native workflow files for Claude Code, Codex, and/or ZCode. Use when the user asks to set up, bootstrap, or dry-run project-level agent configuration, including CLAUDE.md, AGENTS.md, project-level skills directories, and optional git-hook maintainability audit reminders.
 ---
 
 # 初始化项目（Init Project）
@@ -16,14 +16,17 @@ description: Initialize or retrofit a repository with agent-native workflow file
 ## 工作流
 
 1. 在提出文件方案之前，先检测代理上下文。
-   - 活动宿主信号：环境变量 `CLAUDECODE=1` 或已存在的
-     `CLAUDE.md` 表明是 Claude Code；`~/.codex` 或已存在的 `AGENTS.md`
-     表明是 Codex。一个仓库可以同时面向两者。
-   - 仅当信号含糊，或仓库面向一个当前未在运行的宿主时，才询问用户。
+   - 优先采用用户明确指定的目标与当前运行时的宿主身份。
+     `CLAUDECODE=1` 是 Claude Code 的信号；ZCode 运行时表明当前宿主为 ZCode。
+     已有 `.claude/`、`.codex/` 或 `.zcode/` 目录仅表明可能使用的宿主，
+     不能据此判断当前宿主。`AGENTS.md` 与 `.agents/skills/` 由 Codex 和
+     ZCode 共用，不能用于区分二者。
+   - 一个仓库可以面向多个宿主。仅当无法从请求、运行时或项目指引确定
+     所需目标时，才询问用户。
 2. 在提出文件方案之前，先检查仓库。
    - 阅读 `package.json`/`pyproject.toml`/等价的清单文件、已存在的
      `CLAUDE.md`/`AGENTS.md`、已存在的项目技能目录
-     (`.claude/skills/`、`.agents/skills/`)，以及存在时的 `docs/README.md`。
+     (`.claude/skills/`、`.agents/skills/`、`.zcode/skills/`)，以及存在时的 `docs/README.md`。
 3. 只询问影响生成文件的缺失决策。
    - 技术栈与执行模型：框架、包管理器、运行时、Docker 还是本地。
    - 文档偏好，代码、UI 文案、注释、文档与提交信息的语言/风格策略。
@@ -35,8 +38,10 @@ description: Initialize or retrofit a repository with agent-native workflow file
 4. 由代理直接生成项目指引。
    - Claude Code 目标：`CLAUDE.md`（长期规则）、`.claude/skills/<project-skill>/SKILL.md`（可复用的工作流细节）。
    - Codex 目标：`AGENTS.md`（长期规则）、`.agents/skills/<project-skill>/SKILL.md`。
-   - 当同时面向两个宿主时，生成两套文件且规则内容保持一致；
-     在每个文件中注明另一个文件的存在，以便保持同步。
+   - ZCode 目标：`AGENTS.md`（长期规则）、`.zcode/skills/<project-skill>/SKILL.md`。
+   - 同时面向多个宿主时，保持规则内容一致。Codex 与 ZCode 共用一个
+     `AGENTS.md`；共享技能放在 `.agents/skills/`，不要再复制到 `.zcode/skills/`。
+     若同时面向 Claude Code，保持 `CLAUDE.md` 内容同步并注明配套规则文件。
    - 覆盖已有指引之前，先展示或解释拟议的改动。
 5. Git-hook 审计提醒（与宿主无关，位于仓库内）。
    - 选择加入后，将 agent-kit 的 `core/git-hooks/` 包复制进仓库，

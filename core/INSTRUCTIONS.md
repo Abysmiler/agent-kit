@@ -1,9 +1,9 @@
 # Agent Kit Core Instructions
 
-These instructions are agent-agnostic. They are loaded by both CLAUDE.md
-(Claude Code) and AGENTS.md (Codex) via the marker block rendered by
+These instructions are agent-agnostic. They are loaded by CLAUDE.md
+(Claude Code) and AGENTS.md (Codex and ZCode) via the marker block rendered by
 `scripts/sync.py`. Do not edit the rendered copies; edit this file and re-run
-`python scripts/sync.py --force`.
+`python scripts/sync.py --apply`.
 
 ## Language
 
@@ -23,7 +23,7 @@ These instructions are agent-agnostic. They are loaded by both CLAUDE.md
 - Before starting a coding task, check whether the current project is inside a local Git repository.
 - If no local Git repository exists, ask whether the user wants to create one. Do not create it or start coding until the user confirms.
 - File reading, problem analysis, and requirements discussion may proceed without a Git repository.
-- When a reusable project-specific method emerges, update the relevant repo-level skill directory (for Claude Code: `.claude/skills/`; for Codex: `.agents/skills/`).
+- When a reusable project-specific method emerges, update the relevant repo-level skill directory (for Claude Code: `.claude/skills/`; for Codex: `.agents/skills/`; for ZCode: `.zcode/skills/`).
 
 ## Environment
 
@@ -34,11 +34,11 @@ These instructions are agent-agnostic. They are loaded by both CLAUDE.md
 Route sub-agent work by role tier, not by tool-specific profile names. Map the
 tier to whatever the current agent host provides:
 
-| Tier | Use for | Claude Code mapping | Codex mapping |
-|---|---|---|---|
-| `tier: execute` | mechanical execution, routine implementation | default model (Sonnet-class) | regular profile |
-| `tier: review` | review, repair, high-risk implementation | Opus-class subagent or fresh high-effort context | high reasoning-effort profile |
-| `tier: plan` | full plans, hard-cap re-decomposition | Opus-class at highest effort | max reasoning-effort profile |
+| Tier | Use for | Claude Code mapping | Codex mapping | ZCode mapping |
+|---|---|---|---|---|
+| `tier: execute` | mechanical execution, routine implementation | default model (Sonnet-class) | regular profile | configured default model |
+| `tier: review` | review, repair, high-risk implementation | Opus-class subagent or fresh high-effort context | high reasoning-effort profile | fresh review context; higher effort if available |
+| `tier: plan` | full plans, hard-cap re-decomposition | Opus-class at highest effort | max reasoning-effort profile | fresh planning context; highest available effort |
 
 When the host has no tier concept, substitute a fresh context plus explicit
 instructions to be maximally careful and skeptical.

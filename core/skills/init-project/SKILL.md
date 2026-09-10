@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: Initialize or retrofit a repository with agent-native workflow files for Claude Code and/or Codex. Use when the user asks to set up, bootstrap, or dry-run project-level agent configuration, including CLAUDE.md, AGENTS.md, project-level skills directories, and optional git-hook maintainability audit reminders.
+description: Initialize or retrofit a repository with agent-native workflow files for Claude Code, Codex, and/or ZCode. Use when the user asks to set up, bootstrap, or dry-run project-level agent configuration, including CLAUDE.md, AGENTS.md, project-level skills directories, and optional git-hook maintainability audit reminders.
 ---
 
 # Init Project
@@ -15,15 +15,17 @@ project guidance at runtime from inspected facts and user decisions.
 ## Workflow
 
 1. Detect the agent context before proposing files.
-   - Active host signals: environment variable `CLAUDECODE=1` or an existing
-     `CLAUDE.md` indicates Claude Code; `~/.codex` or an existing `AGENTS.md`
-     indicates Codex. A repository may target both.
-   - Ask the user only when signals are ambiguous or the repo targets a host
-     that is not currently running.
+   - Prefer the user's explicit target and the active runtime's host identity.
+     `CLAUDECODE=1` is a Claude Code signal; a ZCode runtime identifies ZCode.
+     Existing `.claude/`, `.codex/`, or `.zcode/` directories indicate possible
+     targets, not the active host. `AGENTS.md` and `.agents/skills/` are shared
+     by Codex and ZCode and do not distinguish them.
+   - A repository may target multiple hosts. Ask only when the required target
+     cannot be determined from the request, runtime, or project guidance.
 2. Inspect the repository before proposing files.
    - Read `package.json`/`pyproject.toml`/equivalent manifests, existing
      `CLAUDE.md`/`AGENTS.md`, existing project skills directories
-     (`.claude/skills/`, `.agents/skills/`), and `docs/README.md` when they exist.
+     (`.claude/skills/`, `.agents/skills/`, `.zcode/skills/`), and `docs/README.md` when they exist.
 3. Ask only for missing decisions that affect generated files.
    - Technology stack and execution model: frameworks, package manager,
      runtime, Docker or local.
@@ -37,8 +39,11 @@ project guidance at runtime from inspected facts and user decisions.
 4. Generate project guidance directly as the agent.
    - Claude Code targets: `CLAUDE.md` (long-lived rules), `.claude/skills/<project-skill>/SKILL.md` (reusable workflow detail).
    - Codex targets: `AGENTS.md` (long-lived rules), `.agents/skills/<project-skill>/SKILL.md`.
-   - When both hosts are targeted, generate both file sets with identical
-     rule content; note in each file that the other exists so they stay in sync.
+   - ZCode targets: `AGENTS.md` (long-lived rules), `.zcode/skills/<project-skill>/SKILL.md`.
+   - When multiple hosts are targeted, keep their rule content consistent.
+     Codex and ZCode share one `AGENTS.md`; put shared skills in `.agents/skills/`
+     rather than duplicating them in `.zcode/skills/`. If Claude Code is also
+     targeted, keep `CLAUDE.md` aligned and note the companion rule file.
    - Show or explain proposed changes before overwriting existing guidance.
 5. Git-hook audit reminders (host-agnostic, lives in the repository).
    - When opted in, copy the agent-kit `core/git-hooks/` package into the
