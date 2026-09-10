@@ -35,6 +35,19 @@ These instructions are agent-agnostic. They are loaded by CLAUDE.md
 
 - Visual Studio 2008 is installed at `E:\Dev\VisualStudio2008`; prefer this environment for Visual Studio 2008 projects.
 
+## File Encoding
+
+Most local projects use GBK (CP936), including the VS2008 C/C++ codebase. Encoding
+damage is usually silent, so follow these rules:
+
+- Detect a file's existing encoding before editing it, and write it back in that same encoding. Never convert a file's encoding, or "unify" a project's encoding, as a side effect of an unrelated task.
+- New files inside an existing GBK project must be GBK. Only brand-new standalone projects default to UTF-8 without BOM.
+- Never write BOM-less UTF-8 into MSVC / Visual Studio 2008 C/C++ sources. MSVC decodes a BOM-less file with the system ANSI code page (CP936 here), so Chinese comments become mojibake and Chinese string literals are corrupted in the compiled binary; VS2008 also has no `/utf-8` switch. Use UTF-8 with BOM, GBK, or plain ASCII instead.
+- Emoji, rare CJK characters, and box-drawing or status symbols cannot be represented in GBK. Keep non-ASCII text inside comments where possible, and keep string literals ASCII unless the project already requires otherwise.
+- Pass an explicit encoding whenever a program reads or writes text; do not rely on platform defaults. Python `open()` uses the locale encoding (CP936), Windows PowerShell 5.1 defaults `Out-File` to UTF-16LE and adds a BOM for `-Encoding UTF8`, while PowerShell 7+ writes UTF-8 without BOM.
+- Preserve line endings (CRLF/LF) together with the encoding; do not let a tool rewrite an entire file for a small edit.
+- If detection is ambiguous, ask instead of guessing. A genuine conversion is a separate, explicit change made with the user's agreement.
+
 ## Model Routing Tiers
 
 Route sub-agent work by role tier, not by tool-specific profile names. Map the
