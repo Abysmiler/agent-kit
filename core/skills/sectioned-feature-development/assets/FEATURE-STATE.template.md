@@ -11,8 +11,7 @@
 - Active section: `<Sxx / Sxx.n or none>`
 - Parent lineage: `<none or Sxx -> Sxx.n>`
 - Replan generation: `<0+>`
-- Review round: `<0..5>`
-- Clean streak: `<0..1>` (record only; a single clean coverage-complete review accepts)
+- Review round: `<0..3; beyond 3 only via recorded user continue>`
 - Next action: `<exact next gate>`
 - Last updated: `<timestamp>`
 
@@ -25,11 +24,11 @@
 
 ## 3. Section Status and Lineage
 
-| ID | Parent | State | Base | Head | Review round | Clean streak | Replan gen | Contract | Review/Handoff |
-|---|---|---|---|---|---:|---:|---:|---|---|
-| S01 | — | PLANNED | — | — | 0 | 0 | 0 | — | — |
+| ID | Parent | State | Base | Head | Review round | Replan gen | Contract | Review/Handoff |
+|---|---|---|---|---|---:|---:|---|---|
+| S01 | — | PLANNED | — | — | 0 | 0 | — | — |
 
-Valid states include `PLANNED`, `CONTRACT_FROZEN`, `IMPLEMENTED`, `UNDER_REVIEW`, `REPAIRING`, `SECTION_ACCEPTED`, `SPLIT_AFTER_HARD_CAP`, `BLOCKED`.
+Valid states include `PLANNED`, `CONTRACT_FROZEN`, `IMPLEMENTED`, `UNDER_REVIEW`, `REPAIRING`, `SECTION_ACCEPTED`, `SECTION_ACCEPTED_WITH_DEBT`, `SPLIT_AFTER_HARD_CAP`, `BLOCKED`.
 
 ## 4. Requirement Coverage
 
@@ -57,9 +56,9 @@ Valid states include `PLANNED`, `CONTRACT_FROZEN`, `IMPLEMENTED`, `UNDER_REVIEW`
 
 ## 8. Hard-Cap Replans
 
-| Parent | Generation | Original base | Failed tip | Backup branch | Summary | Descendants | Retry branch/worktree |
-|---|---:|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — |
+| Parent | Generation | Original base | Failed tip | Backup branch | User decision | Summary | Descendants | Retry branch/worktree |
+|---|---:|---|---|---|---|---|---|---|
+| — | — | — | — | — | — | — | — | — |
 
 ## 9. Integration Checkpoints
 

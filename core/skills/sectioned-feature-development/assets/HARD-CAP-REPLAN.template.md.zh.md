@@ -12,26 +12,29 @@
 - Failed tip: `<commit>`
 - Backup branch: `agent-kit/backup/<...>`
 - Failed working path: `<path>`
-- Hard cap: `5 full SECTION reviews`
-- Required acceptance: `a clean, coverage-complete full SECTION review`
+- Hard cap: `3 counting review rounds`
+- Required acceptance: `a clean counting round (coverage-complete full review or delta-verified)`
 
-## 五轮评审
+## 评审轮次
 
-| 轮次 | 被评审 head | 新的重大问题 | 根因 / 边界 | 修复提交 | 结果 |
-|---:|---|---|---|---|---|
-| 1 | `<sha>` | `<REV ids / none>` | `<...>` | `<sha / —>` | `findings / clean` |
-| 2 | `<sha>` | `<...>` | `<...>` | `<...>` | `<...>` |
-| 3 | `<sha>` | `<...>` | `<...>` | `<...>` | `<...>` |
-| 4 | `<sha>` | `<...>` | `<...>` | `<...>` | `<...>` |
-| 5 | `<sha>` | `<...>` | `<...>` | `<...>` | `hard-cap / clean` |
+| 轮次 | 模式 | 被评审 head | 新的重大问题 | 根因 / 边界 | 修复提交 | 结果 |
+|---:|---|---|---|---|---|---|
+| 1 | full | `<sha>` | `<REV ids / none>` | `<...>` | `<sha / —>` | `findings / clean` |
+| 2 | delta | `<sha>` | `<...>` | `<...>` | `<...>` | `<...>` |
+| 3 | delta | `<sha>` | `<...>` | `<...>` | `<...>` | `hard-cap / clean` |
 
 ## 评审工件
 
 - `.agent-work/reviews/<ID>-SECTION-r01.md`
 - `.agent-work/reviews/<ID>-SECTION-r02.md`
 - `.agent-work/reviews/<ID>-SECTION-r03.md`
-- `.agent-work/reviews/<ID>-SECTION-r04.md`
-- `.agent-work/reviews/<ID>-SECTION-r05.md`
+
+## 用户决策
+
+- 呈现的选项：`continue / split / accept-risk / block`（谱系深度：`<depth>`）
+- 决策：`<continue | split | accept-risk | block>`
+- 授予的授权：`<额外轮次（多少轮）| salvage/cherry-pick 范围 | 风险接受范围 | 无>`
+- 记录为债务的剩余问题：`<IDs 或 none>`
 
 ## 收敛诊断
 
@@ -63,4 +66,4 @@
 - 重试起点：`<original section base>`
 - 重试分支/worktree：`<agent-kit/retry/...>`
 - 第一个就绪后代：`<Sxx.1>`
-- 是否 cherry-pick 失败实现的提交：`no`
+- 是否 cherry-pick 失败实现的提交：`no（或用户决策中授权的范围）`

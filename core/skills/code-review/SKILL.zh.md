@@ -21,11 +21,11 @@ description: "Review one pull request, commit range, uncommitted diff, bounded i
 
 ## 按需渐进加载参考文档
 
-- 在选择评审透镜或检查非平凡变更时，阅读 [references/review-coverage.md](references/review-coverage.md)。
-- 当变更由 AI 智能体产出或被其实质性修改，或变更涉及智能体工具链、提示词、权限、CI、MCP、连接器或生成产物时，阅读 [references/ai-agent-risk-catalog.md](references/ai-agent-risk-catalog.md)。
-- 对于启用修复的评审、多轮评审或编排调度，阅读 [references/review-loop-protocol.md](references/review-loop-protocol.md)。
-- 对于大型评审或任何需要在上下文压缩后存续的评审，阅读 [references/ledger-templates.md](references/ledger-templates.md)。
-- 对于 `SECTION`、章节范围的 `DELTA`、集成检查点或最终 `INTEGRATION` 评审，阅读 [references/section-review-protocol.md](references/section-review-protocol.md)。
+- 对于 `SECTION`、章节范围的 `DELTA`、集成检查点或最终 `INTEGRATION` 评审，阅读 [references/section-review-protocol.md](references/section-review-protocol.md)。在编排式章节工作流中这是唯一必需的参考文档；技能本身已携带循环、验收与重置规则。
+- 为 `Large`（大型）深度评审或异常宽泛的变更选择透镜时，阅读 [references/review-coverage.md](references/review-coverage.md)。
+- 当 `Large` 深度的变更由 AI 智能体产出或被其实质性修改，或变更涉及智能体工具链、提示词、权限、CI、MCP、连接器或生成产物时，阅读 [references/ai-agent-risk-catalog.md](references/ai-agent-risk-catalog.md)。
+- 对于非由 sectioned-feature-development 编排的独立修复型/多轮评审，阅读 [references/review-loop-protocol.md](references/review-loop-protocol.md)。
+- 对于需要在上下文压缩后存续的独立大型评审，阅读 [references/ledger-templates.md](references/ledger-templates.md)。
 
 ## 评审契约
 
@@ -67,6 +67,8 @@ description: "Review one pull request, commit range, uncommitted diff, bounded i
 ```
 
 在活跃期间创建 `.agent-work/change-review/CURRENT.md`。使用 `references/ledger-templates.md` 中的模板。仅在最终报告完成后才删除 `CURRENT.md`。
+
+来自 sectioned-feature-development 的编排式 `SECTION`/`DELTA` 轮次不创建该台账目录；只写入编排者指定的输出文件。
 
 ## 阶段 1：重建意图与不变量
 
@@ -189,7 +191,7 @@ description: "Review one pull request, commit range, uncommitted diff, bounded i
 
 ## 最终全新上下文验证
 
-在所有已接受的修复完成后，可行时执行一次全新上下文的对抗性验证。对于无修复的普通 `SECTION`，独立的完整章节评审可以承担这一角色；有界修复之后，成功的 `DELTA` 验证通常已足够，除非章节风险或重置触发器支持再做一次全新验证。整个功能仍然需要一次最终的 `INTEGRATION` 评审。
+在所有已接受的修复完成后，可行时执行一次全新上下文的对抗性验证。对于无修复的普通 `SECTION`，独立的完整章节评审可以承担这一角色；有界修复之后，成功的 `DELTA` 验证通常已足够，除非章节风险或重置触发器支持再做一次全新验证。在编排式章节工作流中，修复后的计数轮次本身就是那次 `DELTA` 验证——除非重置触发器生效，不要再加一次单独的全新完整验证。整个功能以编排工作流定义的最终门禁收尾；只有该工作流的触发条件成立时才运行 `INTEGRATION` 评审。
 
 - 从当前仓库状态、意图、不变量和原始 diff 出发。
 - 不预载先前的合理化解释或已被拒绝的假设。

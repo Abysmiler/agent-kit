@@ -10,26 +10,22 @@
 - Failed tip: `<commit>`
 - Backup branch: `agent-kit/backup/<...>`
 - Failed working path: `<path>`
-- Hard cap: `5 full SECTION reviews`
-- Required acceptance: `a clean, coverage-complete full SECTION review`
+- Hard cap: `3 counting review rounds`
+- Required acceptance: `a clean counting round (coverage-complete full review or delta-verified)`
 
-## Five Review Rounds
+## Review Rounds
 
-| Round | Reviewed head | New material findings | Root cause / boundary | Repair commit | Result |
-|---:|---|---|---|---|---|
-| 1 | `<sha>` | `<REV ids / none>` | `<...>` | `<sha / —>` | `findings / clean` |
-| 2 | `<sha>` | `<...>` | `<...>` | `<...>` | `<...>` |
-| 3 | `<sha>` | `<...>` | `<...>` | `<...>` | `<...>` |
-| 4 | `<sha>` | `<...>` | `<...>` | `<...>` | `<...>` |
-| 5 | `<sha>` | `<...>` | `<...>` | `<...>` | `hard-cap / clean` |
+| Round | Mode | Reviewed head | New material findings | Root cause / boundary | Repair commit | Result |
+|---:|---|---|---|---|---|---|
+| 1 | full | `<sha>` | `<REV ids / none>` | `<...>` | `<sha / —>` | `findings / clean` |
+| 2 | delta | `<sha>` | `<...>` | `<...>` | `<...>` | `<...>` |
+| 3 | delta | `<sha>` | `<...>` | `<...>` | `<...>` | `hard-cap / clean` |
 
 ## Review Artifacts
 
 - `.agent-work/reviews/<ID>-SECTION-r01.md`
 - `.agent-work/reviews/<ID>-SECTION-r02.md`
 - `.agent-work/reviews/<ID>-SECTION-r03.md`
-- `.agent-work/reviews/<ID>-SECTION-r04.md`
-- `.agent-work/reviews/<ID>-SECTION-r05.md`
 
 ## Convergence Diagnosis
 
@@ -38,6 +34,13 @@
 - Weak or over-broad oracle: <...>
 - Repair-induced interactions: <...>
 - Evidence that motivates the split: <...>
+
+## User Decision
+
+- Options presented: `continue / split / accept-risk / block` (lineage depth: `<depth>`)
+- Decision: `<continue | split | accept-risk | block>`
+- Authorization granted: `<extra rounds (how many) | salvage/cherry-pick scope | risk acceptance scope | none>`
+- Remaining findings recorded as debt: `<IDs or none>`
 
 ## [tier: plan] Re-decomposition Request
 
@@ -61,4 +64,4 @@
 - Retry starts from: `<original section base>`
 - Retry branch/worktree: `<agent-kit/retry/...>`
 - First ready descendant: `<Sxx.1>`
-- Failed implementation commits cherry-picked: `no`
+- Failed implementation commits cherry-picked: `no (or the scope authorized in the user decision)`

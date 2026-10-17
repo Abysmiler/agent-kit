@@ -246,11 +246,11 @@ When uncertain, run sequentially. Parallel agents can increase throughput while 
 
 ## 9. Hard-cap re-decomposition
 
-When one active section reaches five fresh full `SECTION` review rounds without a clean, coverage-complete round, do not increase the review budget. Treat the five reports as empirical evidence that the section boundary is still wrong for agentic implementation/review.
+When one active section reaches three counting review rounds without a clean round, do not increase the review budget autonomously. Treat the round reports as empirical evidence that the section boundary may be wrong for agentic implementation/review, preserve the failed attempt, and stop at the hard-cap user decision (`continue` / `split` / `accept-risk` / `block`).
 
-The `[tier: plan]` decomposer should split only the failed section and preserve accepted predecessors plus the original feature contract. Use hierarchical IDs such as `S03.1`, `S03.2`; if `S03.1` later fails, use `S03.1.1`, `S03.1.2`.
+Only a recorded `split` choice invokes the `[tier: plan]` decomposer. It should split only the failed section and preserve accepted predecessors plus the original feature contract. Use hierarchical IDs such as `S03.1`, `S03.2`; if `S03.1` later fails, present the decision again and, on another `split`, use `S03.1.1`, `S03.1.2`.
 
-Count dots in the lineage ID as recursive split depth: `S03` is depth `0`, `S03.1` depth `1`, `S03.1.1` depth `2`, and `S03.1.1.1` depth `3`. Complete hard-cap backup, decomposition, plan validation, retry setup, and descendant execution autonomously through depth `3`. Only when the next split would create depth `4+` should orchestration pause and ask Human whether to authorize deeper recursion or re-plan the affected boundary.
+Count dots in the lineage ID as recursive split depth: `S03` is depth `0`, `S03.1` depth `1`, `S03.1.1` depth `2`, and `S03.1.1.1` depth `3`. Report the depth in every hard-cap decision; at depth `3`, recommend re-planning the feature boundary instead of a depth-`4+` split.
 
 Good split axes include:
 

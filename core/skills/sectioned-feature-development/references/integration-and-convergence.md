@@ -1,13 +1,13 @@
 # Integration and Convergence Guide
 
-Use this guide to distinguish section acceptance from feature readiness and to interpret the single-clean-review / five-round hard-cap policy.
+Use this guide to distinguish section acceptance from feature readiness and to interpret the single-clean-review / three-round hard-cap policy.
 
 ## Contents
 
 1. [Review roles](#1-review-roles)
 2. [Single-clean section acceptance](#2-single-clean-section-acceptance)
-3. [Five-round hard cap](#3-five-round-hard-cap)
-4. [Why hard-cap recovery splits instead of asking to continue](#4-why-hard-cap-recovery-splits-instead-of-asking-to-continue)
+3. [Three-round hard cap](#3-three-round-hard-cap)
+4. [Hard-cap user decision](#4-hard-cap-user-decision)
 5. [Integration checkpoints](#5-integration-checkpoints)
 6. [Final integration review](#6-final-integration-review)
 7. [Reset and evidence invalidation](#7-reset-and-evidence-invalidation)
@@ -18,7 +18,7 @@ Use this guide to distinguish section acceptance from feature readiness and to i
 
 ### SECTION
 
-A full review of one frozen section range plus its direct impact cone. Each counting round uses a fresh reviewer context.
+The round-1 full review of one frozen section range plus its direct impact cone, from a fresh reviewer context. Later counting rounds are `DELTA` reviews (below).
 
 Possible local result:
 
@@ -26,11 +26,11 @@ Possible local result:
 - no new material actionable finding;
 - blocked by a genuine decision/evidence gap.
 
-The parent workflow, not the individual reviewer, decides whether a clean, coverage-complete round has been achieved.
+The parent workflow, not the individual reviewer, decides whether a counting round is clean.
 
-### Optional DELTA
+### DELTA counting rounds
 
-A targeted repair check may prove that one fix closes its finding and does not break its immediate impact cone. It is useful evidence, but an optional internal DELTA check during repair does not by itself accept the section; acceptance still requires a counting review.
+After a repair, the counting round is a `DELTA` review of the repair delta plus its invalidated impact cone. A `delta-verified` result (all frozen findings closed, no new blocking defect in the cone) is a clean counting round and accepts the section. A full `SECTION` review runs again only after a reset trigger, so stable scope is never rescanned.
 
 ### INTEGRATION
 
@@ -44,29 +44,18 @@ A section is provisionally accepted only when all are true:
 - required checks pass or an external evidence blocker is explicit;
 - no unresolved `Must Fix`, unaccepted `Should Fix`, or blocking `Needs Decision` remains;
 - deferred work has an explicit later owner and does not make the current intermediate state invalid;
-- one fresh, coverage-complete full `SECTION` review discovers no new material actionable root cause. After a repair, one clean review of the repair delta plus its impact cone is sufficient unless a reset trigger fires.
+- one counting round is clean: a coverage-complete full `SECTION` review (round 1) with no new material actionable root cause, or a `delta-verified` round after repair.
 
-### Clean streak record
+The counting reviewer must not be primed with “the previous round was clean”, prior persuasive conclusions, or repair narratives. Frozen finding IDs and closed root-cause IDs (IDs and one-line titles only) are shared to prevent re-raising closed items.
 
-Initialize `clean_streak = 0`. It remains tracked in `FEATURE-STATE.md` for the record, but acceptance no longer depends on it reaching any particular value.
-
-- Clean full review -> `clean_streak += 1`.
-- New material actionable finding -> `clean_streak = 0`.
-- Repair -> streak remains `0` until a later full review is clean.
-- Optional DELTA verification -> no effect on streak.
-- Repeated wording of an already-closed root cause -> does not reset by itself.
-- Unsupported hypothesis/style preference/non-blocking debt -> does not reset by itself.
-
-The counting reviewer must not be primed with “the previous round was clean” or prior persuasive conclusions.
-
-## 3. Five-round hard cap
+## 3. Three-round hard cap
 
 Per active section attempt:
 
-- Maximum counting full `SECTION` reviews: **5**.
+- Maximum counting rounds: **3** (full round 1, `DELTA` rounds after repair).
 - Soft cap: **none**.
-- Acceptance condition: a clean, coverage-complete counting review within those five.
-- Round 6 is forbidden for the same section attempt.
+- Acceptance condition: a clean counting round within those three.
+- Round 4 on the same attempt is forbidden without an explicit recorded user `continue` decision.
 
 Examples:
 
@@ -77,24 +66,20 @@ R1 clean
 
 ```text
 R1 findings -> repair
-R2 clean review of the repair delta plus impact cone
+R2 delta-verified
 => accepted in 2 rounds
 ```
 
 ```text
 R1 findings -> repair
-R2 findings -> repair
-R3 findings -> repair
-R4 findings -> repair
-R5 findings -> repair
-=> not accepted; hard-cap split, because no round was clean
+R2 delta findings -> repair
+R3 delta findings -> repair
+=> not accepted; hard-cap user decision
 ```
 
-## 4. Why hard-cap recovery splits instead of asking to continue
+## 4. Hard-cap user decision
 
-Five non-convergent full reviews are treated as evidence about the decomposition, not as a request for a larger review budget.
-
-Common evidence patterns:
+Three non-convergent counting rounds are treated as evidence about the decomposition — but the response is a user decision, not an autonomous rewrite. Common evidence patterns:
 
 - multiple independent behaviors were placed in one section;
 - one section spans several state/ownership boundaries;
@@ -104,15 +89,15 @@ Common evidence patterns:
 - an enabling refactor and feature behavior are entangled;
 - hidden cross-section dependencies were left inside the section.
 
-Recovery therefore:
+The decision therefore:
 
 1. preserves the failed code state on `agent-kit/backup/***`;
-2. summarizes all five review rounds;
-3. asks a `[tier: plan]` subagent to re-decompose only that section;
-4. validates the new descendant plan;
-5. restarts implementation from the failed parent's original `section_base`.
+2. summarizes all counting rounds with their root-cause patterns;
+3. asks the user to choose, in order: `continue` (up to two more counting rounds), `split`, `accept-risk`, or `block`;
+4. on `split`, asks a `[tier: plan]` subagent to re-decompose only that section, validates the new descendant plan, and restarts implementation from the failed parent's original `section_base` — salvaging failed-attempt commits only if the decision explicitly authorizes it;
+5. on `accept-risk`, records every remaining finding as explicit debt/decisions and marks the section accepted with debt.
 
-Do not ask the user “continue?” just because the hard cap was reached or because a technical split at recursion depth `1`–`3` is needed. Complete those splits and resume execution autonomously. A Human question is appropriate when decomposition exposes a genuine user-owned semantic decision or when the next split would create recursion depth `4+`; in the latter case ask whether to authorize deeper recursion or re-plan the affected boundary.
+Never autonomously discard near-converged work or start re-implementation at the hard cap; the user owns that trade-off.
 
 ## 5. Integration checkpoints
 
@@ -138,7 +123,9 @@ A checkpoint can invalidate prior local evidence when actual composition disprov
 
 ## 6. Final integration review
 
-After all active leaf sections are accepted, review the assembled feature against the original contract.
+After all active leaf sections are accepted, close the feature. Run the final `INTEGRATION` review only when at least one applies: the feature crossed a high-risk semantic boundary; more than three active leaf sections were accepted; a hard-cap split occurred; or the user/governing instructions request it. Otherwise the deterministic full-feature validation suite plus the last section's review evidence closes the feature.
+
+When the review runs, assess the assembled feature against the original contract and do not replay accepted local line.
 
 ### Original intent
 
@@ -200,17 +187,17 @@ Require the user/accountable owner for:
 - migration/backfill meaning;
 - acceptable data/security/operational risk;
 - rollout cohort/timing policy when not already specified;
-- conflicting authoritative requirements.
+- conflicting authoritative requirements;
+- the three-round review hard cap (continue / split / accept-risk / block).
 
-Do not require user approval merely to:
+Do not require user approval again, after a recorded `split` choice, merely to:
 
 - create the hard-cap backup branch;
 - invoke the `[tier: plan]` decomposer;
-- split a technical section;
 - create the retry branch/worktree;
 - extract the first descendant and resume implementation.
 
-All of the above remain autonomous through recursive split depth `3`. Require Human approval only before creating depth-`4+` descendants, unless another genuine user-owned decision already requires a pause.
+Those follow the recorded decision under the already delegated execution authority. At lineage depth `3`, a further split should recommend re-planning the feature boundary instead of depth-`4+` recursion.
 
 ## 9. Final readiness gate
 
@@ -220,7 +207,7 @@ State `mergeable` only when:
 - parent sections retired by hard-cap splits have complete lineage/evidence;
 - all full-feature requirements are covered;
 - required integration checkpoints pass;
-- final integration review has no unresolved material merge blocker;
+- the required final gate — an `INTEGRATION` review when triggered, otherwise the deterministic full-feature validation suite plus the last section's review evidence — has no unresolved material merge blocker;
 - full-feature deterministic checks pass or explicit external blockers/residual risk are reported;
 - rollout, rollback, migration, observability, and cleanup obligations are resolved or explicitly accepted.
 

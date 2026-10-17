@@ -19,11 +19,11 @@ Review one bounded change set with senior-engineer judgment. Optimize for real m
 
 ## Load References Progressively
 
-- Read [references/review-coverage.md](references/review-coverage.md) when selecting review lenses or inspecting a non-trivial change.
-- Read [references/ai-agent-risk-catalog.md](references/ai-agent-risk-catalog.md) when the change was produced or materially modified by an AI agent, or changes agent tooling, prompts, permissions, CI, MCP, connectors, or generated artifacts.
-- Read [references/review-loop-protocol.md](references/review-loop-protocol.md) for repair-enabled reviews, multi-round reviews, or orchestration.
-- Read [references/ledger-templates.md](references/ledger-templates.md) for large reviews or any review expected to survive context compression.
-- Read [references/section-review-protocol.md](references/section-review-protocol.md) for `SECTION`, section-scoped `DELTA`, integration-checkpoint, or final `INTEGRATION` reviews.
+- Read [references/section-review-protocol.md](references/section-review-protocol.md) for `SECTION`, section-scoped `DELTA`, integration-checkpoint, or final `INTEGRATION` reviews. In orchestrated section workflows this is the only required reference; the skill itself already carries the loop, acceptance, and reset rules.
+- Read [references/review-coverage.md](references/review-coverage.md) when selecting lenses for a `Large`-depth review or an unusually broad change.
+- Read [references/ai-agent-risk-catalog.md](references/ai-agent-risk-catalog.md) when a `Large`-depth change was produced or materially modified by an AI agent, or when the change touches agent tooling, prompts, permissions, CI, MCP, connectors, or generated artifacts.
+- Read [references/review-loop-protocol.md](references/review-loop-protocol.md) for standalone repair-enabled or multi-round reviews that are not orchestrated by sectioned-feature-development.
+- Read [references/ledger-templates.md](references/ledger-templates.md) for standalone large reviews or any standalone review expected to survive context compression.
 
 ## Review Contract
 
@@ -65,6 +65,8 @@ For large or multi-round work, create:
 ```
 
 Create `.agent-work/change-review/CURRENT.md` while active. Use the templates in `references/ledger-templates.md`. Delete `CURRENT.md` only after the final report is complete.
+
+Orchestrated `SECTION`/`DELTA` rounds from sectioned-feature-development do not create this ledger directory; write only the orchestrator-specified output file.
 
 ## Phase 1: Reconstruct Intent and Invariants
 
@@ -187,7 +189,7 @@ Record the reset reason. Never disguise a reset as another ordinary iteration.
 
 ## Final Fresh Verification
 
-After all accepted fixes, run one fresh-context adversarial verification pass when feasible. For an ordinary `SECTION` with no repair, the independent full section review can satisfy this role; after bounded repair, successful `DELTA` verification is normally sufficient unless section risk or a reset trigger justifies another fresh pass. The whole feature still requires a final `INTEGRATION` review.
+After all accepted fixes, run one fresh-context adversarial verification pass when feasible. For an ordinary `SECTION` with no repair, the independent full section review can satisfy this role; after bounded repair, successful `DELTA` verification is normally sufficient unless section risk or a reset trigger justifies another fresh pass. In an orchestrated section workflow, the counting round after a repair is itself that `DELTA` verification — do not add a separate fresh full pass unless a reset trigger fires. The whole feature closes with the final gate defined by the orchestrating workflow; an `INTEGRATION` review runs only when that workflow's trigger conditions hold.
 
 - Start from the current repository state, intent, invariants, and raw diff.
 - Do not preload prior rationalizations or rejected hypotheses.

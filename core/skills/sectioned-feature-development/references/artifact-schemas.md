@@ -53,7 +53,7 @@ After hard-cap re-decomposition, hierarchical IDs are valid:
 <!-- SECTION:S03.1:END -->
 ```
 
-If `S03.1` later requires another hard-cap split, use descendants such as `S03.1.1` and `S03.1.2`. Treat the original section as depth `0` and continue autonomously through depth `3` (for example `S03.1.1.1`). If the next descendants would be depth `4+`, record `BLOCKED_RECURSION_DEPTH` in `FEATURE-STATE.md` and the hard-cap record, then request Human approval for deeper recursion or a re-plan.
+If `S03.1` later requires another hard-cap split, present the hard-cap decision again and, on another recorded `split` choice, use descendants such as `S03.1.1` and `S03.1.2`. Treat the original section as depth `0`. At depth `3`, recommend re-planning the feature boundary instead of a depth-`4+` split; record the recommendation and the user choice in `FEATURE-STATE.md` and the hard-cap record.
 
 Each active section block must contain:
 
@@ -104,13 +104,13 @@ Required records:
 - Feature base/current head and execution mode.
 - Active branch/worktree and retry branch/worktree.
 - Current state and next action.
-- Section status with lineage, base/head, review round, clean streak, and replan generation.
+- Section status with lineage, base/head, review round, and replan generation.
 - Requirement coverage status.
 - Decisions and authority.
 - Open findings and review locations.
 - Checks run/not run.
 - Integration checkpoints.
-- Hard-cap events, backup branches, failed tips, and descendant mapping.
+- Hard-cap events, backup branches, failed tips, the recorded user decision, and descendant mapping.
 - Reset/evidence invalidation events.
 - Deferred items and residual risk.
 
@@ -189,7 +189,7 @@ Every counting review file should record:
 - Checks/evidence.
 - Reviewer's local verdict.
 
-The main orchestrator separately records `review_round` and `clean_streak`; an individual reviewer does not decide the single-clean acceptance condition.
+The main orchestrator separately records `review_round`; an individual reviewer does not decide the single-clean acceptance condition.
 
 ## 7. Hard-cap replan files
 
@@ -205,10 +205,11 @@ Required records:
 - Original `section_base`.
 - Failed tip.
 - `agent-kit/backup/***` branch.
-- Five review files and reviewed heads.
+- All counting-round review files and reviewed heads.
 - Round-by-round new material findings/root causes.
 - Repair commits/checks.
 - Recurring failure pattern.
+- The recorded user decision and any authorization it granted.
 - `[tier: plan]` decomposer prompt/context summary.
 - Descendant IDs and dependency/requirement changes.
 - Retry branch/worktree and new active section.

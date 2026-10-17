@@ -136,7 +136,7 @@
 10. 确认每个延迟项都是显式的、有指派的、可安全推迟的。
 11. 将症状归并在稳定的根因发现 ID 之下。
 
-对稳定的章节基线，该完整发现只执行一次。
+对稳定的章节基线，该完整发现只执行一次。修复之后，计数轮次是针对修复增量及其失效影响锥的 `DELTA` 评审；提供冻结的问题 ID 与已关闭根因 ID（仅 ID 与一行标题），使已关闭的问题不被重新提出。只有重置触发器（第 7 节）生效后才再次执行完整发现。
 
 ## 5. 章节特有的发现类别
 
@@ -155,32 +155,22 @@
 
 ## 6. 章节验收
 
-仅当以下条件成立时返回 `section-accepted`：
+仅当技能的收敛与停止条件在章节范围内成立，且以下章节特有条件也成立时，才返回 `section-accepted`：
 
-- 不再存在未解决的 `Must Fix` 或未被接受的 `Should Fix`。
-- 不再存在阻塞性的 `Needs Decision`。
-- 强制触发的覆盖已完整或有明确界限。
-- 必需的定向检查通过，或外部阻塞项与剩余风险已明确记录。
-- 已接受的修复发现有独立的闭环证据。
-- 中间状态有效。
-- 延迟工作是显式的且有指派。
-- 该章节保持了相关的功能级不变量。
+- 在未来章节开始之前，中间仓库/运行时状态有效；
+- 延迟工作是显式的且有指派；
+- 该章节保持了其所触及的功能级不变量。
 
-未发生修复时，一次干净评审（clean review）、覆盖完整的章节评审即已足够。修复之后，一次成功的 `DELTA` 验证即已足够，除非重置触发器触发。不要求两次空的全章节评审。
+一个干净的计数轮次即可接受：第 1 轮覆盖完整的完整评审，或修复后 `delta-verified` 的轮次。不要求两次空的全章节评审。
 
-对普通章节，单独的 `FINAL` 扫描是可选的。将其用于风险异常高的章节，或评审者独立性确实能增加证据的场景。该功能仍然需要一次最终的 `INTEGRATION` 评审。
+对普通章节，单独的 `FINAL` 扫描是可选的。将其用于风险异常高的章节，或评审者独立性确实能增加证据的场景。该功能以编排工作流的条件性最终门禁收尾。
 
 ## 7. 章节重置触发器
 
-当以下情况发生时执行新的完整 `SECTION` 评审：
+当技能的增量再评审与重置规则触发时（公共 API/schema/迁移/权限/状态持有者/并发语义改变、修复重写章节相当部分、范围扩张、base/head 移出被跟踪的修复、证据过期），或当以下情况发生时，执行新的完整 `SECTION` 评审：
 
-- 章节验收标准发生实质性变化。
-- 公共 API、schema、迁移、权限、租户、状态持有者、并发、破坏性行为或发布语义发生改变。
-- 修复重写了章节的相当部分。
-- 范围扩张到另一章节或新的功能行为。
-- base/head 在被追踪的实现或修复补丁之外发生变化。
+- 已冻结的章节验收标准发生实质性变化；
 - 前置集成改变了被评审的契约。
-- 证据或账本指纹过期或自相矛盾。
 
 记录重置原因并保留先前的发现历史。
 
@@ -244,6 +234,7 @@ This verdict is provisional and does not establish whole-feature merge readiness
 Review mode: SECTION.
 Review section {ID} in {working path} from {section_base} to {section_head}.
 Read {feature_contract}, {section_contract}, and {handoff}.
+Closed root causes already verified in earlier rounds (IDs and titles only, do not re-raise): {list}.
 Use [$code-review]({skill path}/SKILL.md).
 Write the review to {output_path}.
 Do not repair and do not review the whole feature except for the direct impact cone.
@@ -255,6 +246,7 @@ Do not repair and do not review the whole feature except for the direct impact c
 Review mode: DELTA.
 Verify findings {IDs} for section {ID} in {working path} from {repair_base} to {repair_head}.
 Read the frozen findings at {ledger_path} and review only the repair delta plus its invalidated impact cone.
+Closed root causes (IDs and titles only, do not re-raise): {list}.
 Use [$code-review]({skill path}/SKILL.md).
 Write the result to {output_path}.
 ```

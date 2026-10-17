@@ -1,6 +1,6 @@
 # Orchestration Protocol
 
-Use this reference when the main agent delegates planning, section implementation, full section review, repair, automatic hard-cap re-decomposition, and final integration to separate agent contexts.
+Use this reference when the main agent delegates planning, section implementation, section review, repair, hard-cap decisions, and final integration to separate agent contexts.
 
 ## Contents
 
@@ -8,7 +8,7 @@ Use this reference when the main agent delegates planning, section implementatio
 2. [Context packets](#2-context-packets)
 3. [Profile routing](#3-profile-routing)
 4. [Section orchestration algorithm](#4-section-orchestration-algorithm)
-5. [Five-round hard-cap recovery](#5-five-round-hard-cap-recovery)
+5. [Three-round hard cap and user decision](#5-three-round-hard-cap-and-user-decision)
 6. [Commit and branch discipline](#6-commit-and-branch-discipline)
 7. [Worktrees and retry isolation](#7-worktrees-and-retry-isolation)
 8. [Decision handling](#8-decision-handling)
@@ -30,7 +30,7 @@ Receives one extracted section and frozen contract. It implements only that sect
 
 ### Section reviewer
 
-A fresh `[tier: review]` context running the `code-review` skill in `SECTION` mode. Every counting review is a new full review of the current section range and direct semantic impact cone. It does not receive previous review conclusions before forming its own view.
+A fresh `[tier: review]` context running the `code-review` skill. Round 1 is a full `SECTION` review of the section range and direct semantic impact cone; later counting rounds are `DELTA` reviews of the repair delta plus its invalidated cone. It receives frozen finding IDs and closed root-cause IDs (IDs and one-line titles only), not prior reviewer reasoning or repair narratives.
 
 ### Repair agent
 
@@ -38,7 +38,7 @@ A `[tier: review]` context receiving the current round's frozen agent-fixable fi
 
 ### Hard-cap decomposer
 
-A clean `[tier: plan]` subagent used only after five full review rounds fail to produce a clean, coverage-complete round. It receives the failed section, original section base, current `PLAN-FULL.md`, and the five review histories. It splits only that section into smaller descendants and updates affected plan edges; it does not implement product code.
+A clean `[tier: plan]` subagent invoked only after the user records a `split` choice at the three-round hard cap. It receives the failed section, original section base, current `PLAN-FULL.md`, and the review-round histories. It splits only that section into smaller descendants and updates affected plan edges; it does not implement product code.
 
 ### Integration reviewer
 
@@ -67,7 +67,9 @@ Commit authority: {mode}
 Do not implement future sections.
 ```
 
-### Full section review packet
+### Review packets
+
+Round 1 (full `SECTION`):
 
 ```text
 Review mode: SECTION
@@ -81,7 +83,22 @@ Output: .agent-work/reviews/{ID}-SECTION-r{NN}.md
 Use: the code-review skill
 ```
 
-Do not include previous review findings, whether the last round was clean, or language such as “final confirmation”. The main orchestrator, not the reviewer, owns the single-clean acceptance rule.
+Post-repair counting round (`DELTA`):
+
+```text
+Review mode: DELTA
+Working path: {path}
+Section: {ID}
+Repair range: {repair_base}..{section_head}
+Frozen findings from round {NN}: {IDs}
+Closed root causes (IDs and one-line titles only): {list}
+Feature contract: .agent-work/PLAN-FULL.md
+Section contract: .agent-work/sections/{ID}-CONTRACT.md
+Output: .agent-work/reviews/{ID}-SECTION-r{NN}.md
+Use: the code-review skill
+```
+
+Do not include prior reviewer reasoning, repair narratives, or whether the last round was clean. Sharing closed root-cause IDs (IDs and titles only) is required, not a violation of independence — it prevents re-raising closed items. The main orchestrator, not the reviewer, owns the acceptance rule.
 
 ### Repair packet
 
@@ -97,7 +114,7 @@ Required checks: {commands}
 Do not broaden scope or fix unlisted speculative issues.
 ```
 
-### Hard-cap `[tier: plan]` packet
+### Hard-cap `[tier: plan]` packet (split choice only)
 
 ```text
 Task: Re-decompose one non-converging section. Do not implement product code.
@@ -108,20 +125,18 @@ Current failed section: {ID} — {title}
 Original section base: {section_base}
 Failed tip: {failed_tip}
 Backup branch: {backup_branch}
-Hard-cap summary: .agent-work/replans/{ID}-g{generation}-HARD-CAP.md
+Hard-cap summary and user decision: .agent-work/replans/{ID}-g{generation}-HARD-CAP.md
 Review files:
   - .agent-work/reviews/{ID}-SECTION-r01.md
   - .agent-work/reviews/{ID}-SECTION-r02.md
   - .agent-work/reviews/{ID}-SECTION-r03.md
-  - .agent-work/reviews/{ID}-SECTION-r04.md
-  - .agent-work/reviews/{ID}-SECTION-r05.md
 
-The section failed to reach a clean, coverage-complete full SECTION review within five rounds.
+The section failed to reach a clean counting round within three rounds, and the user chose to split.
 Split only this section into smaller independently implementable, testable, and reviewable descendants.
 Preserve accepted predecessor sections and user-owned feature semantics.
-Use hierarchical lineage IDs such as {ID}.1, {ID}.2; recursively extend through depth 3 without pausing.
-Treat the original section as depth 0. If the proposed descendants would be depth 4+, do not split yet: return a Human-decision packet for deeper-recursion approval or boundary re-planning.
-Use the five review histories as decomposition evidence: repeated root causes must become explicit boundaries, invariants, oracles, or separate descendants.
+Use hierarchical lineage IDs such as {ID}.1, {ID}.2.
+Current lineage depth is {depth}; depth-4+ descendants require a recorded user re-plan choice.
+Use the review histories as decomposition evidence: repeated root causes must become explicit boundaries, invariants, oracles, or separate descendants.
 Update requirement coverage, dependency edges, downstream Requires, checkpoints, and deferred-work ownership affected by the split.
 Do not carry failed implementation choices forward merely because they already exist.
 ```
@@ -149,9 +164,9 @@ Tiers section of the core instructions):
 
 - ordinary section implementation: `[tier: execute]`;
 - high-risk section implementation and repairs: `[tier: review]`;
-- every counting full `SECTION` review: a fresh `[tier: review]` reviewer context;
-- five-round hard-cap re-decomposition: a clean `[tier: plan]` subagent;
-- final integration review: a fresh `[tier: review]` reviewer context unless governing instructions specify otherwise.
+- every counting review round (full round 1, later `DELTA` rounds): a fresh `[tier: review]` reviewer context;
+- hard-cap split after a recorded user `split` choice: a clean `[tier: plan]` subagent;
+- final integration review when triggered: a fresh `[tier: review]` reviewer context unless governing instructions specify otherwise.
 
 The `[tier: plan]` decomposer is not a generic sixth reviewer. Its task is to change the decomposition, not to continue the same search process.
 
@@ -169,24 +184,26 @@ for section in dependency_order(active_leaf_sections):
     commit_if_authorized("implementation")
 
     review_round = 0
-    clean_streak = 0
 
-    while review_round < 5:
+    while review_round < 3:
         review_round += 1
         section_head = current_head()
-        if review_round == 1:
-            report = run_clean_full_SECTION_review(
+        if review_round == 1 or reset_trigger_fired:
+            report = run_full_SECTION_review(
                 section_base,
                 section_head,
+                closed_root_cause_ids=closed_ids(titles_only=True),
                 output=f"{section}-SECTION-r{review_round:02d}.md"
             )
         else:
-            # After a repair, the acceptance review is scoped to the repair
-            # delta plus its impact cone (see integration-and-convergence.md).
-            report = run_post_repair_review(
+            # After a repair, the counting round is a DELTA review of the
+            # repair delta plus its invalidated impact cone; stable scope is
+            # never rescanned (see integration-and-convergence.md).
+            report = run_DELTA_review(
                 repair_base,
                 section_head,
-                cone=direct_semantic_impact_cone(),
+                frozen_finding_ids=last_round_material_ids,
+                closed_root_cause_ids=closed_ids(titles_only=True),
                 output=f"{section}-SECTION-r{review_round:02d}.md"
             )
 
@@ -196,13 +213,11 @@ for section in dependency_order(active_leaf_sections):
             persist_state_and_block_for_decision()
 
         if findings.has_no_new_material_actionable_issue():
-            # One coverage-complete clean review accepts the section.
-            clean_streak += 1
+            # A clean full round or a delta-verified round accepts the section.
             persist_round_state()
             accept_section_provisionally()
             break
 
-        clean_streak = 0
         fixable = findings.agent_fixable_material_items()
         repair_base = section_head
         run_repair(fixable)
@@ -212,16 +227,19 @@ for section in dependency_order(active_leaf_sections):
         persist_round_state()
 
     if not section_is_accepted():
-        hard_cap_replan(section)
-        replace_parent_with_active_descendants()
-        continue_from_original_section_base()
+        preserve_failed_attempt(section)
+        decision = ask_user_hard_cap_decision(section)
+        # continue:     up to two more counting rounds on the same attempt
+        # split:        hard_cap_replan(section) -> descendants from original base
+        # accept-risk:  accept_with_recorded_debt(section)
+        # block:        stop for human intervention
 ```
 
 ### What counts as material
 
 A new `Must Fix`, `Should Fix`, or blocking `Needs Decision` root cause is material.
 
-These normally do not reset a clean streak:
+These normally do not count as material:
 
 - repeated wording of an already-closed root cause;
 - explicit work assigned to a later section when the current intermediate state is valid;
@@ -231,37 +249,36 @@ These normally do not reset a clean streak:
 
 The main orchestrator makes this accounting decision from the review report and current evidence.
 
-### DELTA checks
+### Internal repair checks
 
-Targeted DELTA verification may be useful inside a repair wave, especially for risky fixes. It does not increment `review_round` and cannot increment `clean_streak`. Only a fresh full `SECTION` review counts.
+Targeted internal checks inside a repair wave remain useful for risky fixes. They do not advance `review_round`; the counting round after repair is itself the `DELTA` review.
 
-## 5. Five-round hard-cap recovery
+## 5. Three-round hard cap and user decision
 
-There is no soft cap. The only review-round budget is five full `SECTION` reviews per active section attempt.
+The review-round budget is three counting rounds per active section attempt (full round 1, `DELTA` rounds after repair). There is no soft cap and no autonomous round 4.
 
-If round 5 ends without section acceptance (no clean, coverage-complete full review):
+If round 3 ends without section acceptance:
 
-1. **Do not run round 6.**
-2. Determine the next descendant depth. If it is `1`–`3`, **do not ask whether to continue**. If it is `4+`, preserve evidence and request Human approval for deeper recursion or a re-plan.
-3. Persist the failed attempt and review history.
-4. Create `agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{timestamp}` at the failed tip.
-5. Compile a round-by-round hard-cap summary.
-6. For depth `1`–`3`, invoke a clean `[tier: plan]` decomposer with the packet above. For depth `4+`, stop before invocation unless Human authorizes deeper recursion.
-7. Validate the revised `PLAN-FULL.md`.
-8. Mark the failed parent `SPLIT_AFTER_HARD_CAP` and activate its descendants.
-9. Retry descendants from the failed parent's original `section_base`, not from the failed tip; continue directly through depth `3` without a progress pause.
+1. **Do not run round 4.**
+2. Persist the failed attempt and review history.
+3. Create `agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{timestamp}` at the failed tip.
+4. Compile a round-by-round hard-cap summary with recurring root-cause patterns.
+5. Stop and present the user decision: `continue` (up to two more counting rounds), `split`, `accept-risk`, or `block`, in that order, with the current lineage depth attached.
+6. Act only on the recorded choice:
+   - `continue`: resume counting rounds on the same attempt;
+   - `split`: invoke a clean `[tier: plan]` decomposer with the packet above, validate the revised `PLAN-FULL.md`, mark the failed parent `SPLIT_AFTER_HARD_CAP`, activate descendants, and retry them from the failed parent's original `section_base`, not the failed tip; recommend re-planning the feature boundary instead when descendants would be depth `4+`;
+   - `accept-risk`: mark `SECTION_ACCEPTED_WITH_DEBT` and record every remaining finding in the deferred-work/residual-risk ledger;
+   - `block`: stop for human intervention on the root cause.
 
 ### Round-by-round summary
 
 The summary must preserve evidence, not vague “review still found issues” language:
 
-| Round | Reviewed head | New material findings | Root cause / boundary | Repair commit | Result |
-|---|---|---|---|---|---|
-| 1 | `<sha>` | `REV-...` | `<...>` | `<sha>` | findings |
-| 2 | `<sha>` | `...` | `...` | `<sha>` | findings/clean |
-| 3 | `<sha>` | `...` | `...` | `<sha>` | ... |
-| 4 | `<sha>` | `...` | `...` | `<sha>` | ... |
-| 5 | `<sha>` | `...` | `...` | `—` | hard cap |
+| Round | Mode | Reviewed head | New material findings | Root cause / boundary | Repair commit | Result |
+|---|---|---|---|---|---|---|
+| 1 | full | `<sha>` | `REV-...` | `<...>` | `<sha>` | findings |
+| 2 | delta | `<sha>` | `...` | `...` | `<sha>` | findings/delta-verified |
+| 3 | delta | `<sha>` | `...` | `...` | `—` | hard cap |
 
 Also state recurring patterns: contract coupling, ownership ambiguity, too many behaviors, weak oracle, repair-induced interaction, or another evidence-backed cause.
 
@@ -277,7 +294,7 @@ A valid split must do more than reduce line count. Descendants should separate o
 - policy evaluation vs enforcement integration;
 - background production vs consumption/retry behavior;
 - enabling refactor vs observable behavior;
-- bug-prone interaction classes identified by the five reviews.
+- bug-prone interaction classes identified by the review rounds.
 
 Each descendant needs an independent oracle and a stable intermediate repository state.
 
@@ -286,7 +303,7 @@ Each descendant needs an independent oracle and a stable intermediate repository
 In `EXECUTE_WITH_COMMITS`:
 
 - commit the initial coherent section implementation before its first review;
-- after a review with agent-fixable material findings, make one coherent repair commit before the next full review;
+- after a review with agent-fixable material findings, make one coherent repair commit before the next counting round;
 - keep unrelated cleanup/user work out of section commits;
 - at hard cap, ensure the failed attempt's section-owned work is committed before making the backup ref;
 - the backup branch is created automatically under the skill's delegated authority;
@@ -315,7 +332,7 @@ agent-kit/retry/{feature-slug}-{section-id}-g{next-generation}-{YYYYMMDD-HHMMSS}
 Rules:
 
 - failed product-code commits remain only in the failed/backup lineage;
-- do not cherry-pick them by default;
+- do not cherry-pick them unless the user's hard-cap decision explicitly authorized salvaging verified parts;
 - carry forward the revised planning/state artifacts, not failed product-code diffs;
 - if unrelated dirty user work exists, leave its worktree untouched and create an isolated retry worktree;
 - create retry worktrees under the repository-root `.worktrees/` workspace and register the retry task in `.worktrees/current-agents/` per the manual-git-worktrees skill;
@@ -329,16 +346,13 @@ Rules:
 - two authoritative sources conflict;
 - compatibility/migration behavior requires owner choice;
 - acceptable risk or rollout policy cannot be inferred;
-- the `[tier: plan]` split would require changing a frozen user-owned requirement.
+- the `[tier: plan]` split would require changing a frozen user-owned requirement;
+- the three-round review hard cap is reached — the user must choose `continue` / `split` / `accept-risk` / `block`.
 
 ### Must not block merely for permission
 
-- review round 5 was reached;
-- a backup branch must be created;
-- the `[tier: plan]` decomposer must be invoked;
-- the current section must be split;
-- a retry branch/worktree must be created under already delegated execution authority;
-- the main agent must extract the first ready descendant and continue.
+- a backup branch must be created at the hard cap;
+- after a recorded `split` choice, the `[tier: plan]` decomposer must be invoked, the retry branch/worktree created under already delegated execution authority, and the first ready descendant extracted and continued.
 
 ## 9. State integrity
 
@@ -347,11 +361,11 @@ Before every handoff, update `FEATURE-STATE.md` with:
 - feature branch/worktree and active retry path;
 - section ID and lineage;
 - section base/current head;
-- review round and clean streak;
+- review round and last review mode;
 - review report path and material finding IDs;
 - repair commit/check result;
 - replan generation;
-- hard-cap backup branch/failed tip when applicable;
+- hard-cap backup branch/failed tip and the recorded user decision when applicable;
 - active descendants and retired parent;
 - exact next action.
 

@@ -13,8 +13,7 @@
 - Active section: `<Sxx / Sxx.n or none>`
 - Parent lineage: `<none or Sxx -> Sxx.n>`
 - Replan generation: `<0+>`
-- Review round: `<0..5>`
-- Clean streak: `<0..1>` （仅作记录；单次覆盖完整的干净评审即可接受）
+- Review round: `<0..3；超过 3 仅凭记录在案的用户 continue 决策>`
 - Next action: `<exact next gate>`
 - Last updated: `<timestamp>`
 
@@ -27,11 +26,11 @@
 
 ## 3. 章节状态与谱系
 
-| ID | 父章节 | 状态 | Base | Head | 评审轮次 | 连续干净记录 | 重规划代数 | 契约 | 评审/交接 |
-|---|---|---|---|---|---:|---:|---:|---|---|
-| S01 | — | PLANNED | — | — | 0 | 0 | 0 | — | — |
+| ID | 父章节 | 状态 | Base | Head | 评审轮次 | 重规划代数 | 契约 | 评审/交接 |
+|---|---|---|---|---|---:|---:|---|---|
+| S01 | — | PLANNED | — | — | 0 | 0 | — | — |
 
-有效状态包括 `PLANNED`、`CONTRACT_FROZEN`、`IMPLEMENTED`、`UNDER_REVIEW`、`REPAIRING`、`SECTION_ACCEPTED`、`SPLIT_AFTER_HARD_CAP`、`BLOCKED`。
+有效状态包括 `PLANNED`、`CONTRACT_FROZEN`、`IMPLEMENTED`、`UNDER_REVIEW`、`REPAIRING`、`SECTION_ACCEPTED`、`SECTION_ACCEPTED_WITH_DEBT`、`SPLIT_AFTER_HARD_CAP`、`BLOCKED`。
 
 ## 4. 需求覆盖
 
@@ -59,8 +58,8 @@
 
 ## 8. 硬上限重规划
 
-| 父章节 | 代数 | 原始基点 | 失败 tip | 备份分支 | 摘要 | 后代 | 重试分支/worktree |
-|---|---:|---|---|---|---|---|---|
+| 父章节 | 代数 | 原始基点 | 失败 tip | 备份分支 | 用户决策 | 摘要 | 后代 | 重试分支/worktree |
+|---|---:|---|---|---|---|---|---|---|
 | — | — | — | — | — | — | — | — |
 
 ## 9. 集成检查点

@@ -134,7 +134,7 @@ Treat the section contract as authoritative only when it agrees with repository/
 10. Confirm every deferred item is explicit, assigned, and safe to postpone.
 11. Deduplicate symptoms under stable root-cause finding IDs.
 
-Perform this full discovery exactly once for a stable section baseline.
+Perform this full discovery exactly once for a stable section baseline. After a repair, the counting round is a `DELTA` review of the repair delta plus its invalidated impact cone; supply the frozen finding IDs and the closed root-cause IDs (IDs and one-line titles only) so closed items are not re-raised. Run full discovery again only after a reset trigger (§7).
 
 ## 5. Section-specific finding classes
 
@@ -153,32 +153,22 @@ Do not file “the rest of the feature is not implemented” when it is explicit
 
 ## 6. Section acceptance
 
-Return `section-accepted` only when:
+Return `section-accepted` only when the skill's convergence and stop conditions hold for the section scope, plus these section-specific conditions:
 
-- No unresolved `Must Fix` or unaccepted `Should Fix` remains.
-- No blocking `Needs Decision` remains.
-- Mandatory triggered coverage is complete or explicitly bounded.
-- Required targeted checks pass or external blockers and residual risk are explicit.
-- Accepted repair findings have independent closure evidence.
-- The intermediate state is valid.
-- Deferred work is explicit and assigned.
-- The section preserves relevant feature-level invariants.
+- the intermediate repository/runtime state is valid before future sections;
+- deferred work is explicit and assigned;
+- the section preserves the feature-level invariants it touches.
 
-One clean, coverage-complete section review is sufficient when there was no repair. After repair, one successful `DELTA` verification is sufficient unless a reset trigger fires. Do not require two empty full-section reviews.
+One clean counting round accepts: a coverage-complete full review (round 1), or a `delta-verified` review after repair. Do not require two empty full-section reviews.
 
-A separate `FINAL` pass is optional for an ordinary section. Use it for unusually high-risk sections or when reviewer independence materially adds evidence. The feature still requires one final `INTEGRATION` review.
+A separate `FINAL` pass is optional for an ordinary section. Use it for unusually high-risk sections or when reviewer independence materially adds evidence. The feature closes with the orchestrating workflow's conditional final gate.
 
 ## 7. Section reset triggers
 
-Run a new full `SECTION` review when:
+Run a new full `SECTION` review when the skill's incremental re-review and reset rules fire (public API/schema/migration/permission/state-owner/concurrency semantics change, repair rewrites a substantial share of the section, scope expands, base/head moves outside the tracked repair, evidence goes stale), or when:
 
-- Section acceptance criteria materially change.
-- Public API, schema, migration, permission, tenancy, state owner, concurrency, destructive behavior, or rollout semantics change.
-- The repair rewrites a substantial share of the section.
-- Scope expands into another section or new feature behavior.
-- The base/head changes outside the tracked implementation or repair patch.
-- Predecessor integration changes the contract being reviewed.
-- Evidence or ledger fingerprints are stale or contradictory.
+- the frozen section acceptance criteria materially change;
+- predecessor integration changes the contract being reviewed.
 
 Record the reset reason and preserve prior finding history.
 
@@ -242,6 +232,7 @@ This verdict is provisional and does not establish whole-feature merge readiness
 Review mode: SECTION.
 Review section {ID} in {working path} from {section_base} to {section_head}.
 Read {feature_contract}, {section_contract}, and {handoff}.
+Closed root causes already verified in earlier rounds (IDs and titles only, do not re-raise): {list}.
 Use the code-review skill ({skill path}/SKILL.md).
 Write the review to {output_path}.
 Do not repair and do not review the whole feature except for the direct impact cone.
@@ -253,6 +244,7 @@ Do not repair and do not review the whole feature except for the direct impact c
 Review mode: DELTA.
 Verify findings {IDs} for section {ID} in {working path} from {repair_base} to {repair_head}.
 Read the frozen findings at {ledger_path} and review only the repair delta plus its invalidated impact cone.
+Closed root causes (IDs and titles only, do not re-raise): {list}.
 Use the code-review skill ({skill path}/SKILL.md).
 Write the result to {output_path}.
 ```

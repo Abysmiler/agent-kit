@@ -77,4 +77,4 @@
 - Scope materially expands.
 - Base/head changes outside tracked implementation or repair.
 
-- Five full SECTION review rounds without a clean, coverage-complete round retires this attempt and triggers automatic re-decomposition by a `[tier: plan]` subagent.
+- Three counting review rounds without a clean round reach the hard cap: preserve the attempt and stop at the user decision (`continue` / `split` / `accept-risk` / `block`); only a recorded `split` choice triggers `[tier: plan]` re-decomposition.

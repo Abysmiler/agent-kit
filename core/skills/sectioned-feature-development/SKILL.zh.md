@@ -1,13 +1,13 @@
 ---
 name: sectioned-feature-development
-description: "Plan and execute non-trivial software changes as reviewable sections with durable feature state, per-section contracts, independent implementation/review agents, single-clean-review section acceptance, automatic hard-cap re-decomposition, integration checkpoints, and a final cross-section gate. Use when any trigger applies: expected behavioral edits may exceed roughly 300 lines; more than three modules, packages, services, pages, or workflows are affected; the change crosses a high-risk semantic boundary; architecture or state ownership changes; the impact cone is difficult to bound; or a previous whole-change implementation/review failed to converge."
+description: "Plan and execute non-trivial software changes as reviewable sections with durable feature state, per-section contracts, independent implementation/review agents, single-clean-review section acceptance, delta-scoped post-repair re-review, a three-round hard cap escalated to a user decision, integration checkpoints, and a conditional final cross-section gate. Use when any trigger applies: the change crosses a high-risk semantic boundary; architecture or state ownership changes; the impact cone is difficult to bound; a previous whole-change implementation/review failed to converge; or expected behavioral edits exceed roughly 800 lines across more than three modules, packages, services, pages, or workflows."
 ---
 
 <!-- 中文翻译版；英文原版为本目录同名 .md 文件。若两者不一致，以英文版为准。 -->
 
 # 章节化功能开发（Sectioned Feature Development）
 
-将一个大型功能开发为一系列有边界的章节（section）。每个章节必须可独立实现、可测试、可评审，且具有足以诊断的可回退性。当一次全新的、覆盖完整的完整 `SECTION` 评审未发现新的重大可执行问题时，该章节被暂时接受；修复之后，除非重置触发器生效，一次针对修复增量（repair delta）及其影响锥的干净评审即已足够。若五轮完整评审仍未达到该条件，则自动保留失败尝试，将分解工作升级给 `[tier: plan]` 子代理，仅在 `PLAN-FULL.md` 中拆分当前章节，并在递归深度不超过 `3` 的前提下，从原始章节基点开始重新实现更小的后代章节。只有当下一次拆分将产生深度 `4+` 时才暂停，请求人类（Human）批准更深层递归或重新规划。
+将一个大型功能开发为一系列有边界的章节（section）。每个章节必须可独立实现、可测试、可评审，且具有足以诊断的可回退性。第 1 轮评审是一次全新的、覆盖完整的完整 `SECTION` 评审；修复之后，下一个计数轮次是针对修复增量（repair delta）及其影响锥的 `DELTA` 评审，因此稳定范围绝不被重扫。当某个计数轮次未发现新的重大可执行问题时，该章节被暂时接受：一次干净的完整评审，或修复后一次 `delta-verified`（增量验证通过）的轮次。若三轮计数轮次仍未达到该条件，则保留失败尝试，并停在用户决策点上，给出有边界的选项——授权更多轮次、通过 `[tier: plan]` 再分解拆分章节、接受残余风险，或阻塞等待人工介入。
 
 ## 边界与权限
 
@@ -20,22 +20,21 @@ description: "Plan and execute non-trivial software changes as reviewable sectio
 - 仅有规划或评审请求并不授权提交。
 - 若 governing Custom Instructions 明确将分支/提交权限委托给 `sectioned-feature-development` 技能，则该限定范围的委托仅在本工作流的有边界功能/重试分支以及实现/修复/快照提交范围内，优先于其通用禁止提交规则。
 - 绝不推送、合并、创建 pull request、改写已发布历史、清理、删除用户工作或丢弃无关变更，除非另行获得授权。
-- 只要下一次拆分仍处于递归深度 `1`–`3`，五轮评审硬上限**不是**用户决策点。不要询问是否继续；执行自动再分解协议并恢复实现。
-- 从原始章节开始计数递归拆分深度：`S03` 为深度 `0`，`S03.1` 为深度 `1`，`S03.1.1` 为深度 `2`，`S03.1.1.1` 为深度 `3`。仅当下一个必需的拆分将产生深度 `4` 或更深时才暂停；询问人类是授权更深层递归，还是对受影响的功能边界重新规划。
+- 三轮评审硬上限**是**用户决策点。触发时，保留失败尝试，呈现有边界的选项，且只依据记录在案的用户选择行动；不得自主丢弃工作或开始重新实现。
+- 从原始章节开始计数递归拆分深度：`S03` 为深度 `0`，`S03.1` 为深度 `1`，`S03.1.1` 为深度 `2`，`S03.1.1.1` 为深度 `3`。在硬上限决策中报告该深度；当拆分将产生深度 `4` 或更深时，建议对功能边界重新规划，而不是更深层递归。
 - 当确实需要用户拥有的决策时仍须停止：产品语义、兼容性策略、迁移含义、可接受风险、发布行为，或其他不可推断的业务选择。
 
 ## 触发条件
 
 当以下任一条件成立时使用本工作流：
 
-- 预期行为性编辑大致超过 300 行。
-- 受影响的模块、包、服务、页面或工作流超过三个。
 - 变更跨越持久化、schema、资金、时间、单位、安全、权限、多租户、路由、并发、后台任务、公共 API、部署或共享状态边界。
 - 架构或状态所有权发生变化。
 - 影响锥难以界定。
 - 此前对整个变更的实现或评审循环未能收敛。
+- 预期行为性编辑大致超过 800 行**并且**跨越三个以上的模块、包、服务、页面或工作流。
 
-行数阈值只是路由触发器。语义风险与可评审性比原始行数更重要。
+仅规模本身（行数或模块数）绝不触发本工作流；语义风险与可评审性比原始行数更重要。常规规模的变更走正常的计划/实现/评审路径，单次评审即可。
 
 ## 必需产物
 
@@ -81,27 +80,24 @@ PREFLIGHT
   -> IMPLEMENT
   -> LOCAL_VALIDATE
   -> COMMIT_IF_AUTHORIZED
-  -> FULL_SECTION_REVIEW
+  -> REVIEW_ROUND (full on round 1 or after reset; DELTA after repair)
        -> CLEAN -> SECTION_ACCEPTED
-       -> FINDINGS -> REPAIR -> COMMIT -> FULL_SECTION_REVIEW
+       -> FINDINGS -> REPAIR -> COMMIT -> REVIEW_ROUND
+       -> RESET_TRIGGER -> FULL_SECTION_REVIEW
        -> USER_DECISION -> BLOCK
-       -> ROUND_5_WITHOUT_CLEAN -> HARD_CAP_REPLAN
+       -> ROUND_3_WITHOUT_CLEAN -> HARD_CAP_DECISION
   -> SECTION_ACCEPTED
   -> INTEGRATION_CHECKPOINT when triggered
   -> next SECTION_CONTRACT
-  -> FEATURE_INTEGRATION_REVIEW
+  -> CONDITIONAL_FINAL_INTEGRATION_REVIEW
   -> FINAL_VALIDATE
   -> ARCHIVE_AND_REPORT
 
-HARD_CAP_REPLAN
-  -> BACKUP_FAILED_TIP
-  -> CHECK_RECURSION_DEPTH
-       -> DEPTH_1_TO_3 -> PLAN_TIER_SPLIT_CURRENT_SECTION
-       -> DEPTH_4_PLUS -> HUMAN_APPROVAL_OR_REPLAN
-  -> VALIDATE_REVISED_PLAN
-  -> RETRY_FROM_ORIGINAL_SECTION_BASE
-  -> EXTRACT_FIRST_READY_CHILD
-  -> IMPLEMENT
+HARD_CAP_DECISION (user)
+  -> CONTINUE -> REVIEW_ROUND (up to two more counting rounds)
+  -> SPLIT -> HARD_CAP_REPLAN (backup -> [tier: plan] split -> retry from original section base)
+  -> ACCEPT_RISK -> SECTION_ACCEPTED_WITH_DEBT
+  -> BLOCK
 ```
 
 不要因为某个代理声称已完成就推进状态。只有当对应的产物与证据门禁得到满足时才推进。
@@ -170,7 +166,7 @@ python {skill-dir}/scripts/section_plan.py extract \
 - 跨章节契约/检查点已被指名；
 - 重构与行为已分离，除非不可分割；
 - 没有章节是含糊的“完成/集成一切”式收纳桶；
-- 每个章节都足够小，能在五轮评审规则下合理收敛。
+- 每个章节都足够小，能在三轮评审预算下合理收敛。
 
 对含糊/高风险计划使用一个干净的评审者。它质疑分解与契约；它不负责实现。
 
@@ -183,7 +179,7 @@ python {skill-dir}/scripts/section_plan.py extract \
 3. 创建 `.agent-work/sections/{ID}-CONTRACT.md`。
 4. 在写代码之前解决真正开放的业务决策。
 5. 将原始章节的 `replan_generation` 设为 `0`，后代则继承/递增其谱系。
-6. 更新 `FEATURE-STATE.md`：章节 ID、谱系、基点、执行路径、预期检查、评审轮次 `0`、连续干净记录 `0`。
+6. 更新 `FEATURE-STATE.md`：章节 ID、谱系、基点、执行路径、预期检查与评审轮次 `0`。
 
 常规实现不得悄悄重定义已冻结的章节契约。
 
@@ -209,11 +205,13 @@ python {skill-dir}/scripts/section_plan.py extract \
 
 在 `EXECUTE_WITH_COMMITS` 模式下，在评审之前提交完整的章节实现。
 
-## 阶段 5：完整章节评审循环
+## 阶段 5：章节评审循环
 
-每个**评审轮次**都是一次全新的、独立的、以 `SECTION` 模式调用 `code-review` 技能的完整评审，范围为当前 `section_base..section_head` 加上直接语义影响锥。
+第 1 轮评审是一次全新的、独立的、覆盖完整的 `SECTION` 模式 `code-review` 技能调用，范围为当前 `section_base..section_head` 加上直接语义影响锥。之后的每个计数轮次都是针对上一次修复增量及其失效影响锥的全新 `DELTA` 评审，因此稳定范围绝不被重扫。重置触发器生效时恢复完整 `SECTION` 评审。
 
-每个计数轮次都使用一个干净的 `[tier: review]` 评审者子代理。不要告诉它之前轮次是否干净，也不要预载先前评审者的结论。只给它当前章节数据包与输出路径：
+每个计数轮次都使用一个干净的 `[tier: review]` 评审者子代理。不要预载先前评审者的推理、修复叙述，或之前轮次是否干净。要共享当前轮次冻结的问题 ID 以及累计的已关闭根因 ID 清单（仅 ID 与一行标题），使评审者不会重新提出已关闭的问题。
+
+第 1 轮数据包：
 
 ```text
 Review mode: SECTION
@@ -226,48 +224,58 @@ Output: .agent-work/reviews/{ID}-SECTION-r{NN}.md
 Use: the code-review skill
 ```
 
-维护：
+修复后数据包：
 
 ```text
-review_round = 0
-clean_streak = 0
+Review mode: DELTA
+Section: {ID}
+Repair range: {repair_base}..{section_head}
+Frozen findings from round {NN}: {IDs}
+Closed root causes (IDs and one-line titles only): {list}
+Feature contract: .agent-work/PLAN-FULL.md
+Section contract: .agent-work/sections/{ID}-CONTRACT.md
+Output: .agent-work/reviews/{ID}-SECTION-r{NN}.md
+Use: the code-review skill
 ```
 
-`clean_streak` 仍记录在 `FEATURE-STATE.md` 中以备查，但章节接受不再依赖它达到 `2`；一次覆盖完整的干净完整评审即可接受。
+在 `FEATURE-STATE.md` 中维护 `review_round = 0`。
 
-最多进行五轮完整评审：
+最多进行三轮计数轮次：
 
-1. 递增 `review_round` 并运行一次全新的完整 `SECTION` 评审。
+1. 递增 `review_round` 并运行该轮：第 1 轮或重置触发器生效后为完整 `SECTION` 评审，否则为 `DELTA` 评审。
 2. 主代理检查报告与当前仓库状态。
 3. 若某个问题需要真正的用户决策，记录它并立即阻塞。
-4. 若**没有新的重大可执行问题**：
-   - 将该章节标记为 `section-accepted`。单次覆盖完整的干净评审即已足够。
+4. 若**没有新的重大可执行问题**——覆盖完整的干净完整评审，或 `delta-verified` 的 DELTA 轮次——将该章节标记为 `section-accepted`。
 5. 若出现任何新的 `Must Fix`（必须修复）、`Should Fix`（应当修复）或阻塞性 `Needs Decision`（需要决策）问题：
-   - 置 `clean_streak = 0`；
    - 将症状按稳定的根因 ID 去重；
    - 只把该轮中代理可修复的问题发给 `[tier: review]` 修复代理；
    - 运行相关的确定性检查；
    - 在 `EXECUTE_WITH_COMMITS` 模式下提交修复；
    - 更新交接文档与 `section_head`；
-   - 除非重置触发器生效，运行下一次**全新 `SECTION` 评审**，范围为修复增量及其影响锥。
+   - 将下一个计数轮次作为针对本次修复增量及其影响锥的 `DELTA` 评审运行；重置触发器生效时则运行完整 `SECTION` 评审。
 
-以下情况不会打断连续干净记录，除非它们暗示冻结章节中存在重大缺陷：已关闭根因的重复表述、明确延后到未来章节的工作、无依据的假设、纯风格偏好、`Should Plan`（应当规划）或有界技术债。
+以下情况不算重大问题，除非它们暗示冻结章节中存在重大缺陷：已关闭根因的重复表述、明确延后到未来章节的工作、无依据的假设、纯风格偏好、`Should Plan`（应当规划）或有界技术债。
 
-修复验证内部可以使用针对性测试或非计数的 DELTA 检查，但只有全新的完整 `SECTION` 评审才会递增 `review_round` 或 `clean_streak`。
+修复波次内部仍可对高风险修复使用针对性检查；它们不推进 `review_round`——修复后的计数轮次本身就是 `DELTA` 评审。
 
-**没有软上限**。
+### 三轮硬上限
 
-### 五轮硬上限
+在第 3 轮计数之后，若章节仍未被接受，**不要**开始第 4 轮。进入 `HARD_CAP_DECISION`：保留失败尝试（阶段 6.1），然后停下来请用户在以下记录在案的选项中选择：
 
-在第 5 轮评审之后，若章节仍未获得干净的、覆盖完整的完整评审，**不要**询问用户是否继续，也**不要**开始第 6 轮评审。自动进入 `HARD_CAP_REPLAN`。
+- `continue`（继续）：为同一尝试授权最多两个额外计数轮次；
+- `split`（拆分）：执行再分解协议（阶段 6.3 起）；
+- `accept-risk`（接受风险）：接受当前实现，将剩余问题记录为显式债务/决策（`SECTION_ACCEPTED_WITH_DEBT`）；
+- `block`（阻塞）：停下来等待针对根因的人工介入。
 
-## 阶段 6：自动硬上限再分解
+按上述顺序呈现选项，并附上逐轮证据。在谱系深度 `3` 时，建议对功能边界重新规划，而不是深度 `4+` 的拆分。将失败尝试的提交 cherry-pick 进重试，需要在同一决策中获得明确授权。
 
-将五轮未收敛视为证据：当前章节边界对可靠的代理实现/评审而言仍然过宽、耦合过重或隔离不足。保留失败尝试，然后从原始章节基点用更小的后代重试。
+## 阶段 6：硬上限保留与用户决策
+
+将三轮未收敛视为证据：当前章节边界对可靠的代理实现/评审而言可能过宽、耦合过重或隔离不足。保留失败尝试，然后停在硬上限用户决策点（阶段 5）。只有记录在案的 `split` 选择才进入下述再分解路径。
 
 ### 6.1 保留失败尝试
 
-1. 记录 `failed_tip = HEAD`、`section_base`、当前章节 ID、重规划代数、全部五份评审文件、修复提交与检查结果。
+1. 记录 `failed_tip = HEAD`、`section_base`、当前章节 ID、重规划代数、全部计数轮次评审文件、修复提交与检查结果。
 2. 在已授权提交的情况下，确保当前章节拥有的代码变更均已提交。绝不将无关的用户变更吸收进快照。
 3. **无需请求授权**即创建备份分支：
 
@@ -276,46 +284,49 @@ agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{YYYYMMDD-HHMMSS}
 ```
 
 让其指向 `failed_tip`。优先在不切换分支的情况下创建该引用。
-4. 使用内置模板编写 `.agent-work/replans/{section-id}-g{generation}-HARD-CAP.md`。逐轮总结五次评审各发现了什么、哪些根因已修复、什么问题反复出现，以及该章节为何未能获得一次干净的、覆盖完整的评审。
+4. 使用内置模板编写 `.agent-work/replans/{section-id}-g{generation}-HARD-CAP.md`。逐轮总结每个计数轮次各发现了什么、哪些根因已修复、什么问题反复出现，以及该章节为何未能收敛。记录用户决策、呈现的选项以及其授予的任何授权（额外轮次、salvage/cherry-pick、风险接受）。
 
-备份是证据与恢复点。不要在那个失败的代码状态上继续实现。
+备份是证据与恢复点。除非用户决策明确授权（`continue` 或 `accept-risk`），不要在那个失败的代码状态上继续实现。
 
-### 6.2 将分解升级给 `[tier: plan]` 子代理
+### 6.2 呈现硬上限用户决策
 
-在启动 `[tier: plan]` 分解者之前，先计算该次拆分将产生的后代深度。
+停下来请用户按以下顺序选择：`continue`（最多两个额外计数轮次）、`split`（按阶段 6.3 再分解）、`accept-risk`（将剩余问题记录为显式债务/决策并标记 `SECTION_ACCEPTED_WITH_DEBT`）或 `block`（针对根因的人工介入）。附上逐轮证据与当前谱系深度；在深度 `3` 时，建议对功能边界重新规划，而不是深度 `4+` 的拆分。将选择记录到 `FEATURE-STATE.md` 与硬上限摘要中。
 
-- 若下一个后代深度为 `1`、`2` 或 `3`，继续自主执行：调用 `[tier: plan]` 子代理，校验拆分，创建重试分支/worktree，提取第一个就绪后代，并恢复实现。不要暂停等待批准，也不要仅仅汇报进度。
-- 若下一个后代深度将为 `4` 或更深，照常保留失败尝试，记录状态 `BLOCKED_RECURSION_DEPTH`，然后暂停。请人类选择是授权更深层递归，还是对受影响的父级/功能边界重新规划。在深度 `0`–`3` 时不得请求批准。
+选择 `continue` 时，对同一尝试恢复阶段 5 计数轮次。选择 `accept-risk` 时，把每条剩余问题填入延后工作/残余风险台账。选择 `block` 时，停止。
+
+### 6.3 将分解升级给 `[tier: plan]` 子代理（仅限拆分选择）
+
+仅在用户记录 `split` 选择后进入。在启动 `[tier: plan]` 分解者之前，先计算该次拆分将产生的后代深度；深度为 `4+` 时，建议对受影响的父级/功能边界重新规划，而不是拆分。
 
 启动一个干净的 `[tier: plan]` 子代理。明确告知它：
 
 - 当前失败章节的 ID/标题及其 `section_base`；
 - 功能目标、不变量与当前 `PLAN-FULL.md`；
 - 备份分支与失败 tip；
-- 五份评审文件以及逐轮问题的简要总结；
-- 已达到硬上限；
+- 全部计数轮次评审文件以及逐轮问题的简要总结；
+- 已达到硬上限且用户选择了拆分；
 - 它必须**只在 `PLAN-FULL.md` 中把当前章节拆分为更小的、可独立实现/评审的后代章节**；
 - 已接受的前驱章节与用户拥有的功能语义已冻结；
 - 它必须更新需求覆盖、依赖边、下游 `Requires`、检查点，以及受拆分影响的延后工作归属；
 - 它不得实现产品代码；
-- 后代应使用层级式谱系 ID，例如 `S03.1`、`S03.2`；若某个后代随后失败，继续该层级。
-- 当前深度与最大自主深度 `3`；未经记录的人类批准，它不得提出深度 `4+` 的后代。
+- 后代应使用层级式谱系 ID，例如 `S03.1`、`S03.2`；若某个后代随后失败，继续该层级；
+- 当前谱系深度；深度 `4+` 的后代需要记录在案的用户重新规划选择。
 
-`[tier: plan]` 重规划必须把五次评审历史用作分解证据：反复出现的 bug 类别应变成显式边界、不变量、判定基准或独立的后代章节，而不是以散文形式复制到一个看起来更小但语义相同的章节里。
+`[tier: plan]` 重规划必须把评审轮次历史用作分解证据：反复出现的 bug 类别应变成显式边界、不变量、判定基准或独立的后代章节，而不是以散文形式复制到一个看起来更小但语义相同的章节里。
 
-### 6.3 主代理的计划改写与校验
+### 6.4 主代理的计划改写与校验
 
 `[tier: plan]` 子代理返回之后：
 
 1. 主代理检查并在必要时规范化 `PLAN-FULL.md` 的拆分。`[tier: plan]` 子代理提出分解方案；主代理对最终产物的完整性负责。
 2. 将父章节保留为历史谱系，状态为 `SPLIT_AFTER_HARD_CAP`；不再调度它。
 3. 用 `section_plan.py` 校验修订后的 `PLAN-FULL.md`，核实依赖图仍无环且每条完整功能需求仍被覆盖。
-4. 若提议的拆分需要新的用户拥有的产品决策，仅针对该决策阻塞。当下一个后代深度将为 `4+` 时，同样以 `BLOCKED_RECURSION_DEPTH` 阻塞。除此之外，在深度 `3` 以内，不要仅为在硬上限之后继续而请求许可。
-5. 更新 `FEATURE-STATE.md`：备份分支、失败 tip、硬上限摘要、后代 ID 与下一个就绪后代。
+4. 若提议的拆分需要新的用户拥有的产品决策，仅针对该决策阻塞。当后代深度将为 `4+` 时，在决策中建议对功能边界重新规划，而不是更深层拆分。
+5. 更新 `FEATURE-STATE.md`：备份分支、失败 tip、硬上限摘要与用户决策、后代 ID 与下一个就绪后代。
 
-### 6.4 从原始章节基点重试
+### 6.5 从原始章节基点重试
 
-**不要**把失败章节的实现或修复提交 cherry-pick 进重试。
+**不要**把失败章节的实现或修复提交 cherry-pick 进重试，除非用户的硬上限决策明确授权保留（salvage）已验证部分。
 
 从失败父章节的原始 `section_base` 开始后代序列：
 
@@ -327,7 +338,7 @@ agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{YYYYMMDD-HHMMSS}
 
 然后由**主代理**从修订后的 `PLAN-FULL.md` 中提取第一个依赖就绪的后代到 `.agent-work/PLAN.md`，并用常规的实现者/评审者代理恢复阶段 3 → 阶段 5。
 
-硬上限恢复在深度 `3` 以内递归进行而不暂停。若 `S03.1` 本身五轮仍未获得干净的、覆盖完整的完整评审，保留该失败尝试，调用 `[tier: plan]` 子代理，将其拆分为 `S03.1.1`、`S03.1.2`，并从 `S03.1` 自己的 `section_base` 重试。对 `S03.1.1.1` 等深度 `3` 后代执行同样的自主流程。若再次失败将需要深度 `4`，则保留证据并请求人类批准更深层递归或重新规划，而不是自动拆分。
+硬上限拆分只通过用户重复的 `split` 决策递归进行。若某个后代（例如 `S03.1`）自身也达到三轮硬上限，保留该失败尝试并再次呈现决策；在谱系深度 `3` 时，建议对功能边界重新规划，而不是深度 `4+` 的拆分。
 
 ## 阶段 7：集成检查点
 
@@ -337,11 +348,20 @@ agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{YYYYMMDD-HHMMSS}
 
 只并行化满足以下条件的章节：依赖已被接受、语义所有者/契约相互独立、worktree 隔离、集成顺序确定。并行 worktree 必须遵循 `.worktrees/current-agents/` 登记册的冲突检查协议（见 manual-git-worktrees 技能）。
 
-## 阶段 8：最终功能集成门禁
+## 阶段 8：最终功能门禁
 
-当所有活跃叶子章节均被接受且所有延后项均已解决或被明确批准后，对 `feature_base..feature_head` 使用一次干净的 `code-review` 技能 `INTEGRATION` 评审。
+当所有活跃叶子章节均被接受且所有延后项均已解决或被明确批准后，收尾该功能。
 
-关注章节评审单独无法证明的内容：
+仅当以下至少一条成立时，才对 `feature_base..feature_head` 运行最终的 `code-review` 技能 `INTEGRATION` 评审：
+
+- 功能跨越了高风险语义边界；
+- 被接受的活跃叶子章节超过三个；
+- 发生过硬上限拆分；
+- 用户或 governing instructions 明确要求。
+
+否则跳过 `INTEGRATION` 评审：运行确定性的完整功能校验套件，并以该证据加上最后一个被接受章节的评审来判定就绪状态。不要在相同的组合范围上既运行晚期集成检查点又运行最终评审；最终评审涵盖检查点。
+
+当评审运行时，关注章节评审单独无法证明的内容：
 
 - 原始完整功能行为与非目标；
 - 跨章节 API/schema/状态/权限/顺序/错误契约；
@@ -356,7 +376,7 @@ agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{YYYYMMDD-HHMMSS}
 
 ## 阶段 9：归档与报告
 
-1. 更新 `FEATURE-STATE.md`：每个活跃/退役章节的谱系、base/head、判定、评审轮次、连续干净记录、备份分支、硬上限重规划、检查、决策与残余风险。
+1. 更新 `FEATURE-STATE.md`：每个活跃/退役章节的谱系、base/head、判定、评审轮次、备份分支、硬上限决策/重规划、检查、决策与残余风险。
 2. 仅当其章节已被接受、拆分或明确放弃且持久产物已存在后，才删除临时的 `.agent-work/PLAN.md`。
 3. 最终报告之后，将 `.agent-work/PLAN-FULL.md` 移动到 `.agent-work/plans/{YYYYMMDD-HHMM}_FULL.md`。
 4. 保留契约、交接、评审证据与硬上限摘要，除非仓库策略另有规定。
@@ -365,14 +385,14 @@ agent-kit/backup/{feature-slug}-{section-id}-g{generation}-{YYYYMMDD-HHMMSS}
 ## 不可协商的规则
 
 - 一个实现者一次只处理一个已提取的章节/后代。
-- 每次计数评审都是来自干净评审者上下文的全新完整 `SECTION` 评审。
-- 章节接受需要一次覆盖完整的干净完整评审；修复之后，除非重置触发器生效，一次针对修复增量加影响锥的干净评审即已足够。
-- 任何重大可执行问题都会将连续干净记录归零。
-- 五轮完整评审是硬上限；没有软上限，也没有第 6 轮。
-- 硬上限恢复会自动备份失败 tip，并为深度 `1`–`3` 的后代调用 `[tier: plan]` 子代理；在这些深度不请求继续批准。
-- 只有会产生递归深度 `4` 或更深的拆分才暂停等待人类批准更深层递归或重新规划。深度 `0`–`3` 的技术性分解绝不是暂停点。
-- 拆分后的重新实现从失败父章节的原始基点开始，而不是从其被反复修复的代码开始。
+- 第 1 轮评审是来自干净评审者上下文的全新完整 `SECTION` 评审；除非重置触发器生效，之后的每个计数轮次都是针对修复增量及其影响锥的全新 `DELTA` 评审。
+- 章节接受需要一个干净的计数轮次：覆盖完整的完整评审，或修复后 `delta-verified` 的轮次。
+- 评审者独立性意味着不预载推理；共享冻结的问题 ID 与已关闭根因 ID（仅 ID 与标题）以防重新提出已关闭的问题。
+- 三轮计数轮次是硬上限；超出它的任何轮次都需要明确记录在案的用户 `continue` 决策。
+- 达到硬上限时，保留失败 tip 并呈现有边界的选项（continue / split / accept-risk / block）；绝不自主丢弃或重新实现。
+- `split` 选择才会调用 `[tier: plan]` 子代理；深度 `4+` 的拆分应建议对功能边界重新规划。
+- 拆分后的重新实现从失败父章节的原始基点开始，而不是从其被反复修复的代码开始，除非用户决策明确授权保留已验证部分。
 - 失败尝试的提交保留在 `agent-kit/backup/***` 上，默认不进行 cherry-pick。
 - 修复代理不得宣布自己的工作被接受。
 - 新的用户拥有语义需要真正的决策；常规技术性分解不需要。
-- 章节接受是暂时性的，不能替代最终集成门禁。
+- 章节接受是暂时性的；条件性最终门禁（集成评审或完整校验套件）仍然适用。
