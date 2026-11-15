@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "name": "agent-kit",
+  "category": "tools",
+  "status": "active",
+  "stack": "Python 3 · Git hooks · Markdown",
+  "description": "代理无关的编码代理约束套件，将核心规则和技能分发到 Claude Code、Codex 与 ZCode。",
+  "repo": "https://github.com/Abysmiler/agent-kit.git",
+  "created": "2026-11-13",
+  "status_updated": "2026-11-13",
+  "history": [
+    {
+      "date": "2026-11-13",
+      "status": "active",
+      "note": "从 tmp 纳入 tools 管理"
+    }
+  ]
+}

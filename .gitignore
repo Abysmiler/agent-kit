@@ -2,3 +2,22 @@ __pycache__/
 *.pyc
 .DS_Store
 .agent-work/
+
+# 工作区模板规则（python-cli）
+.venv/
+venv/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+.env
+.env.*
+!.env.example

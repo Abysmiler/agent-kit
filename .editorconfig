@@ -1,0 +1,30 @@
+# 项目级编辑器约定（可按栈调整；框架自带配置优先）
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.{cs,py,java,kt,c,cpp,h,hpp}]
+indent_size = 4
+
+[*.{json,jsonc,yml,yaml,js,ts,vue,html,css,scss}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+
+# Windows 脚本用 CRLF；含中文的 .ps1 另需存为 UTF-8 with BOM
+[*.{cmd,bat}]
+end_of_line = crlf
+
+[*.{ps1,psm1,psd1}]
+charset = utf-8-bom
+indent_size = 4
