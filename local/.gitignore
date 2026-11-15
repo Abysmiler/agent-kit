@@ -1,0 +1,4 @@
+# Everything here stays on this machine, except this file and the README.
+*
+!.gitignore
+!README.md
