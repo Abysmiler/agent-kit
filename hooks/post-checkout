@@ -1,6 +1,0 @@
-#!/bin/sh
-if [ "${3:-}" = "0" ]; then
-  exit 0
-fi
-
-exec "$(dirname "$0")/maintainability-audit-reminder"
