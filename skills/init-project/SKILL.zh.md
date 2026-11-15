@@ -44,9 +44,9 @@ description: Initialize or retrofit a repository with agent-native workflow file
      若同时面向 Claude Code，保持 `CLAUDE.md` 内容同步并注明配套规则文件。
    - 覆盖已有指引之前，先展示或解释拟议的改动。
 5. Git-hook 审计提醒（与宿主无关，位于仓库内）。
-   - 选择加入后，将 agent-kit 的 `core/git-hooks/` 包复制进仓库，
+   - 选择加入后，将本技能的 `assets/githooks/` 目录复制进仓库，
      成为 `.githooks/` 加 `scripts/install-git-hooks.sh`，然后让
-     用户运行安装器（Windows 上为 Git Bash）。
+     用户运行 `sh scripts/install-git-hooks.sh`（Windows 上为 Git Bash）。
    - 用 `git config --local agentkit.maintainabilityAuditInterval <N>` 记录节奏，
      并且当 HEAD 存在且用户未要求仅标记基线时，
      `git config --local agentkit.maintainabilityAuditBaseline <head-sha>`。

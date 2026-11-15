@@ -46,9 +46,9 @@ project guidance at runtime from inspected facts and user decisions.
      targeted, keep `CLAUDE.md` aligned and note the companion rule file.
    - Show or explain proposed changes before overwriting existing guidance.
 5. Git-hook audit reminders (host-agnostic, lives in the repository).
-   - When opted in, copy the agent-kit `core/git-hooks/` package into the
+   - When opted in, copy this skill's `assets/githooks/` directory into the
      repository as `.githooks/` plus `scripts/install-git-hooks.sh`, then have
-     the user run the installer (Git Bash on Windows).
+     the user run `sh scripts/install-git-hooks.sh` (Git Bash on Windows).
    - Record cadence with `git config --local agentkit.maintainabilityAuditInterval <N>`
      and, when HEAD exists and the user did not request marker-only baselines,
      `git config --local agentkit.maintainabilityAuditBaseline <head-sha>`.

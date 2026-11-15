@@ -1,284 +1,141 @@
 ---
 name: code-audit
-description: "Perform or continue a periodic full-system codebase audit covering architecture, correctness, security, reliability, operations, supply chain, maintainability, technical debt, anti-bloat, and AI-agent-specific risks. Use for scheduled audits after sustained development, risk reassessment, architecture or security audits, and remediation-enabled audit loops that must preserve coverage state across runs instead of rescanning the entire repository after every fix."
+description: "Perform or continue a periodic whole-system codebase audit covering correctness, architecture, security, data, reliability, operations, supply chain, tests, maintainability, anti-bloat, and AI-agent risks. Use for explicitly requested audits, audit-reminder follow-ups after sustained development, and risk reassessment. Keeps one durable coverage-and-findings file so each cycle deepens instead of rescanning the repository from zero. Not a merge gate for one bounded change; use the code-review skill for that."
 ---
 
-<!-- 中文翻译版；英文原版为本目录同名 .md 文件。若两者不一致，以英文版为准。 -->
+> 本文件是 `SKILL.md` 的中文译本,仅供人阅读,不参与分发。若有出入,以英文版为准。
 
-# 代码审计（Code Audit）
+# 代码审计
 
-将当前系统作为一个被持续维护的产品来审计，而不仅仅是审计一份差异。使用持久的风险与覆盖状态，使周期性审计随时间不断深入，而不是每次从零开始。
+把系统当作一个持续维护的产品来审计,而不是一份 diff。审计是风险抽样:它永远不能证明未审计的区域是安全的。每次运行都有边界,记录覆盖了什么,并给下一次运行留下更好的起点。
 
 ## 边界
 
-- 将本技能用于周期性或明确 requested 的代码库/系统审计。
-- 不要将其作为单个有限范围 PR 的默认合并门禁；那应使用 `code-review` 技能。
-- 审计真实的仓库、运行时、交付与 agent 工具链行为。不要把一次静态扫描或干净的测试运行等同于完整审计。
-- 除非有已定义的基线证明覆盖是穷尽性的，否则将审计视为风险抽样。
-- 仅在用户明确授权修复时才进行修复。
-- 保护用户工作成果与仓库历史。除非被明确要求，否则不要 reset、merge、push、deploy 或变更生产系统。
+- 用于周期性或明确请求的全系统审计。针对单个 pull request、提交范围或 diff,使用 `code-review` 技能。
+- 优先遵循仓库本地的指令。
+- 默认只审计。只有用户授权修复时才改动产品代码。
+- 保护用户的工作和历史。绝不 reset、clean、merge、push、部署或触碰生产系统。
+- 把以往的审计报告、代理摘要、提交消息和通过的测试当作线索,而不是当前行为的证明。
+- 如果这次审计是委派给你的,你就是审计执行者;不要再把同一个审计委派出去。
 
-## 渐进式加载参考文档
-
-- 仅在创建、修订或解释项目审计画像（profile）时阅读 [references/audit-profile-template.md](references/audit-profile-template.md)。
-- 在选择审计域与场景时阅读 [references/audit-coverage.md](references/audit-coverage.md)。
-- 当 agent 实质性参与创建、评审、部署或运维该仓库，或该仓库交付 agent 功能时，阅读 [references/ai-agent-risk-catalog.md](references/ai-agent-risk-catalog.md)。
-- 在涉及周期性范围选择、修复循环、新鲜度、失效与重置规则时阅读 [references/audit-loop-protocol.md](references/audit-loop-protocol.md)。
-- 当简化、删除、过度工程、不必要的依赖或 YAGNI 在范围内时阅读 [references/anti-bloat.md](references/anti-bloat.md)。
-- 在创建或更新持久审计工件之前阅读 [references/ledger-templates.md](references/ledger-templates.md)。
-
-## 持久审计系统
-
-非平凡审计使用以下结构：
+## 持久状态
 
 ```text
 .agent-work/audit/
-├── PROFILE.md                 # 当 docs/audit-profile.md 不适用时
-├── SYSTEM-MAP.md
-├── COVERAGE.md
-├── FINDINGS.md
-├── CURRENT.md                 # 仅活动运行
-└── runs/
-    └── {YYYYMMDD-HHMM}/
-        ├── SCOPE.md
-        ├── EVIDENCE.md
-        └── REPORT.md
+├── AUDIT.md                  # 唯一的持久文件;原地更新
+└── runs/{YYYYMMDD-HHMM}.md   # 每次运行一份报告
 ```
 
-当项目文档有版本管理且仓库规则允许时，优先使用 `docs/audit-profile.md`。不要创建重复的画像。
-
-让 `SYSTEM-MAP.md`、`COVERAGE.md` 与 `FINDINGS.md` 跨审计周期持久保存。将单次运行的证据存放在 `runs/` 下。仅在运行报告完成后才删除 `CURRENT.md`。
-
-## 建立审计画像（profile）
-
-按以下顺序查找画像：
-
-1. `docs/audit-profile.md`
-2. `AUDIT_PROFILE.md`
-3. `.agent-work/audit/PROFILE.md`
-
-若均不存在：
-
-1. 阅读 `references/audit-profile-template.md`。
-2. 在第一个适合该仓库的位置创建草稿。
-3. 为未知字段记录显式假设。
-4. 当重大风险、业务、合规或范围选择会改变优先级排序时，在深入审计前请用户批准这些选择。
-5. 若被指示立即推进，则以 `Draft` 状态继续，并在 `REPORT.md` 中呈报所有重大假设。
-
-画像定义最低覆盖、风险容忍度、质量属性、关键工作流、控制基线、证据期望与抽样规则。它不定义功能需求或实现计划。
-
-## 选择 Baseline 或 Periodic 模式
-
-在以下情况使用 `Baseline`（基线）：
-
-- 不存在可信赖的系统地图或覆盖状态。
-- 项目从未接受过本审计。
-- 某个重置触发器使大范围既往结论失效。
-- 用户明确要求建立全面的新基线。
-
-当持久审计状态可信赖时使用 `Periodic`（周期）。不要仅因为累积了 30–50 个提交就执行全仓库重扫。
-
-在周期模式下，范围来自：
-
-1. 画像中的常开关键面。
-2. 自上次审计以来变更/高变动的区域。
-3. 被依赖、契约、事故或既往修复失效的区域。
-4. 新鲜度到期的轮换深切片。
-5. 未关闭的发现、已接受的技术债、既往缺口、生产/测试失败。
-6. 跨多个组件的端到端场景。
-
-提交数量是重新评估风险的触发器，不是审计覆盖的计量单位。
-
-## 阶段 0：校准仓库现实
-
-- 检查 `git status`、当前分支/head、相关近期提交、tag/发布，以及仓库中可见的部署/配置状态。
-- 在继续被中断的运行之前先读取 `CURRENT.md`。
-- 将持久账本与仍然存在的文件、符号、架构和工作流进行对照。
-- 显式标记过期证据与已失效的覆盖。
-- 识别生成目录/第三方目录及排除项，并给出理由。
-- 记录哪些运行环境、测试、扫描器、日志、指标、事故与外部系统是可访问的。
-
-绝不把上一份审计报告、agent 摘要或提交信息当作当前行为的证明。
-
-## 阶段 1：构建或刷新系统地图
-
-在有助于风险决策的粒度上绘制系统地图：
-
-- 用户、运维人员、业务工作流、核心资产数据（crown-jewel data）、密钥、资金与特权操作。
-- 外部接口与信任边界。
-- 域/模块、归属、依赖方向与公开契约。
-- 数据存储、schema、迁移、缓存、队列、任务与状态机。
-- 部署拓扑、环境、配置、特性开关、可观测性、备份与恢复。
-- CI/CD、依赖、构建来源、发布工件与第三方服务。
-- Agent 身份、提示词、技能、MCP/连接器/插件、记忆、沙箱、工具/网络权限、评测（evals）与自主行为。
-
-只更新发生变化或此前未知的部分。当架构演进过程本身有意义时，保留历史。
-
-## 阶段 2：规划基于风险的覆盖
-
-阅读 `references/audit-coverage.md` 并创建 `SCOPE.md`。
-
-对每个选定的区域记录：
-
-- 为何在范围内：关键、已变更、已失效、轮换、事故驱动、技术债跟进或场景依赖。
-- 受评审的质量属性与失败场景。
-- 文件、接口、工作流、运行时证据与预期测试。
-- 覆盖深度与排除项。
-- 将该区域标记为 `Fresh`（新鲜）所需的证据。
-
-对关键工作流使用基于场景的评审。说明刺激、环境、预期响应、架构决策、权衡与证据。
-
-不要只抽样看起来复杂的文件。应包含入口点、认证/权限门禁、持久化、迁移、后台任务、集成、发布/回滚、可观测性与恢复。
-
-## 阶段 3：在修复之前执行广泛发现
-
-在改动代码之前，通过相互独立的透镜（lens）审计选定区域：
-
-1. 业务正确性与关键工作流不变量。
-2. 架构与质量属性权衡。
-3. 身份、授权、隐私、信任边界与滥用路径。
-4. 数据生命周期、迁移、一致性、备份、恢复、留存与删除。
-5. 并发、任务、队列、重试、幂等与部分失败。
-6. 可靠性、部署、回滚、降级模式、可观测性与事故恢复。
-7. 性能、容量、配额与成本。
-8. 依赖、构建完整性、CI/CD 权限、来源（provenance）与发布工件。
-9. 测试、评测、扫描器、校验完整性与证据质量。
-10. 可维护性、归属、文档、技术债与反膨胀（anti-bloat）。
-11. 适用时的 AI-agent 仓库、harness、自主性、提示注入、记忆与工具风险。
-
-对每个区域：
-
-- 生成失败假设。
-- 从代码、配置、历史、测试、运行时证据或权威文档中验证或证伪它们。
-- 立即将证据追加到 `EVIDENCE.md` 并更新持久覆盖。
-- 按根因去重发现，并分配稳定 ID，例如 `AUD-001`。
-- 记录 `No Action` 覆盖，不凭空制造发现。
-
-## 发现分类
-
-使用单一严重级别：
-
-- `Must Fix`：安全、隐私、数据丢失/损坏、严重正确性、不安全的部署/恢复，或已经阻碍可靠开发的结构性风险。
-- `Should Plan`：需要排期处理的有意义的架构、可靠性、测试、运维、归属或可维护性风险。
-- `Track as Debt`：可接受的有界妥协，须有负责人、上限与 revisit 触发条件。
-- `No Action`：就已批准的画像与当前证据而言，被评审区域是合理的。
-
-使用单一决策类别：
-
-- `Needs Decision`：业务语义、风险容忍度、控制基线、架构权衡或可接受的运维行为需要人类授权。
-- `Agent-Fixable`：预期结果与约束已足够明确。
-- `External Blocker`：所需环境、生产证据、负责人输入或第三方状态不可得。
-
-按业务/用户影响、可利用性或发生概率、爆炸半径、可逆性、证据强度、系统性影响范围与修复成本对发现排序——不要仅按代码行数或扫描器严重级别排序。
-
-## 修复启用模式
-
-仅在获得授权后修复。
-
-1. 冻结已接受的发现 ID、根因、证据与验收标准。
-2. 在选择修复方向之前先解决阻塞性的 `Needs Decision` 项。
-3. 分批最小的一致修复波次。
-4. 保持无关的仓库状态不变。
-5. 在根因边界处添加可负担的最强回归测试或控制。
-6. 仅重新审计修复增量、被失效的依赖锥与受影响场景。
-7. 仅在重置触发器触发时才执行全面重置。
-
-修复 agent 不能通过解释来关闭自己的发现。关闭需要当前的代码/配置，加上独立的或阶段分离的验证证据。
-
-## 覆盖新鲜度与失效
-
-在 `COVERAGE.md` 中使用这些状态：
-
-- `Fresh`（新鲜）：已对照记录的 head/环境评审了所需范围与证据。
-- `Stale`（过期）：时间、变动、依赖时效或运行时证据缺失降低了置信度，但不存在直接矛盾。
-- `Invalidated`（已失效）：某次变更、事故、契约、架构或发现直接推翻了既往结论。
-- `Unknown`（未知）：不存在可信赖的证据。
-
-不要赋予虚假精度，例如"82% 安全"。记录具体的面、证据、日期/提交与失效触发器。
-
-当被审计组件发生变化时，仅使确实可能受影响的依赖结论失效。使用 `SYSTEM-MAP.md` 中的依赖与场景关系。
-
-## 全面基线重置触发器
-
-当以下一项或多项成立时启动新基线：
-
-- 重大架构、运行时、语言、框架、平台或部署拓扑变迁。
-- 数据模型、身份、授权、租户隔离或隐私模型重新设计。
-- 新的核心资产数据、受监管范围、特权操作或实质性不同的风险容忍度。
-- 关键依赖、构建/发布系统、agent 平台、MCP/工具链或自主性模型变化。
-- 重大事故、数据丢失、安全事件，或审计证据推翻了广泛假设。
-- 持久账本缺失、损坏、不可调和地过期，或指向实质性不同的系统。
-- 修复重写了大范围边界，导致定向失效无法可信地界定影响。
-
-记录为何必须重置基线，以及哪些历史发现仍然相关。
-
-## 防止技术债复发
-
-当同一类问题复发时，不要把再排一次相同的扫描作为主要响应。
-
-在合适时，把有证据支撑的复发规则提升为持久控制：
-
-- 结构性/静态 lint。
-- 边界 schema/类型校验。
-- 回归、属性、集成、混沌或恢复测试。
-- 共享的策略/授权/错误处理入口点。
-- 生成器/模板修正。
-- CI/发布护栏。
-- 链接到权威来源的简短仓库规则。
-- 质量等级或周期性定向清理任务。
-
-在 `FINDINGS.md` 中称之为 `golden principle candidate`（黄金原则候选）。要求具备不变量、负责人、执行机制、误报评估与退役/更新路径。
-
-优先持续的小规模清理，而非罕见的巨型去膨胀重写。在被要求时应用 `references/anti-bloat.md`，但绝不为了缩减行数而删除安全控制、迁移保障、防数据丢失措施、无障碍基础、有意义的测试或真实的运维参数。
-
-## 验证与停止条件
-
-仅在以下条件满足时才算完成一次审计运行：
-
-- 每个在范围内的区域都有覆盖状态、证据与缺口记录。
-- 每条报告的发现都有可达的失败路径或具体的结构/运维证据。
-- 强制性的关键场景已被追踪或被显式阻塞。
-- 已授权的修复具有代码可见/配置可见的关闭证据。
-- 相关的测试、扫描器、运行时检查或人工验证已运行，或证据缺失被显式说明。
-- 持久的 `SYSTEM-MAP.md`、`COVERAGE.md` 与 `FINDINGS.md` 反映当前仓库现实。
-- 最终报告说明抽样边界，且绝不暗示未审计区域是安全的。
-
-使用 `references/audit-loop-protocol.md` 中的修复收敛规则。到达硬上限时，带诊断地阻塞——画像决策缺失、oracle（判定基准）薄弱、生产证据不可访问、架构冲突、基座不稳定或反复的系统性失败——而不是泛泛地要求继续循环。
-
-## 委托边界
-
-对于独立的审计执行者，编排器只能传递：
-
-```text
-Audit {working path}, [code-audit]({agent host skills directory}/code-audit/SKILL.md)
+`AUDIT.md` 模板(用英文书写;保持足够短,每次运行都能通读):
+
+```markdown
+# Audit State
+
+## Profile
+<Optional, 3-8 lines: what the system is for, crown-jewel data and privileged
+actions, always-audit surfaces, risk tolerance, exclusions. User-approved
+priorities only; mark assumptions as assumptions.>
+
+## System Map
+<Brief: entry points and trust boundaries, modules and owners, data stores and
+migrations, jobs/queues, external services, build/release path, agent tooling.>
+
+## Coverage
+| Domain | Last audited (commit, date) | Depth | Next focus |
+|---|---|---|---|
+| Authorization | a1b2c3d, 2026-01-15 | deep | export endpoints not traced |
+| Data migrations | never | - | restore path, backfill locking |
+
+## Findings
+| ID | Severity | Status | Title | Location | Last verified |
+|---|---|---|---|---|---|
+| AUD-001 | Must Fix | open | Export skips tenant filter | src/export.ts:88 | a1b2c3d |
 ```
 
-除非用户明确要求定向审计，否则不要把既往疑似发现泄露到独立的发现过程中。
+- 领域(Domain)取自 [references/coverage.md](references/coverage.md);只列出适用于本系统的领域。
+- 深度(Depth)取 `skim`、`sampled` 或 `deep`。绝不用百分比概括覆盖情况。
+- 状态(Status)取 `open`、`fixed`、`accepted` 或 `deferred`。发现的 ID 保持稳定,绝不复用。发现的完整细节保存在提出它的那次运行报告里。
 
-收到该最小提示的子 agent 即已是审计执行者，不得再次委托同一审计。
+## 工作流程
 
-对于修复，传递精确的已授权发现 ID 与冻结的验收标准。对于最终验证，提供当前系统范围与权威画像，但将既往的解释推迟到独立检查之后。
+### 1. 对齐现状
 
-## 报告
+- 记录分支、head 提交和 `git status`。注意用户未提交的改动,并且不要动它们。
+- 通读 `AUDIT.md`。如果不存在就创建:根据仓库证据起草 Profile,构建 System Map,并把适用的领域列为 `never`。
+- 删除已不存在的地图条目和发现位置。如果地图已不能描述系统(重写、新平台、新的数据或权限模型),重建地图并把受影响的 Coverage 行重置为 `never`,而不是打补丁。
+- 记下当前环境中实际可用的检查、扫描器和运行时证据。
 
-面向 agent 的持久工件用英文编写。每次运行的 `REPORT.md` 用中文编写。逐字保留文件路径、符号、命令、错误、证据文本与发现 ID。
+### 2. 选择有边界的范围
 
-报告必须包含：
+按以下优先级挑选本次运行的范围;一旦再加内容就无法在一次会话内可信地完成,就停止添加:
 
-- 审计模式：`Baseline` 或 `Periodic`。
-- 画像状态与重大假设。
-- 仓库状态与审计范围。
-- 范围选择依据：关键、已变更、已失效、轮换、事故驱动与技术债跟进。
-- 已评审的质量属性与端到端场景。
-- 测试、扫描器、运行时/运维证据与缺口。
-- 按严重级别与风险依据排序的发现。
-- 已授权修复及按发现 ID 的验证。
-- 覆盖新鲜度更新与下一轮轮换优先级。
-- 系统健康摘要、最稳固区域、最高风险与需要人类决策的事项。
+1. 自各自 `Last audited` 提交以来发生变化的区域(`git diff --stat <commit>..HEAD`、`git log`),按风险而非行数加权。
+2. 从未覆盖或最久未覆盖的最高风险领域,包括 Profile 中点名的任何常审面。
+3. 需要对照当前代码重新验证的未关闭发现。
 
-除非关闭在当前仓库/配置中可见并有验证证据支撑，否则不要将发现标记为已解决。
+至少包含一条贯穿所选区域的端到端关键工作流。开始前说明范围以及明确排除的内容。只有当优先级或风险容忍度的选择会实质改变范围且无法推断时,才询问用户。
 
-提交已完成的审计工作时，恰好包含一次以下 trailer：
+### 3. 发现
+
+针对所选领域阅读 [references/coverage.md](references/coverage.md)。对每个区域:
+
+- 形成具体的失效假设,然后根据代码、配置、历史、测试或运行时证据予以证实或证伪。
+- 从入口点追踪关键不变量,贯穿领域逻辑、持久化和副作用;局部正确的函数不能证明整个工作流正确。
+- 不要只抽样看起来复杂的文件。要包含入口点、权限关卡、持久化、迁移、后台任务、集成和发布路径。
+- 先完成整个范围的发现,再修复任何东西。
+- 没有发现的区域记为已覆盖;不要捏造发现。
+
+### 4. 对发现分类
+
+每个发现都需要触发条件(如何到达)、影响、证据(`file:line`、命令输出或复现)以及修复方向。把多个症状归并到一个根因之下。给每个陈述标注是已验证的事实还是推断;未证实的怀疑是缺口,不是发现。
+
+- `Must Fix`:安全、隐私、数据丢失或损坏、严重的不正确、不安全的部署或恢复,或已经阻碍可靠开发的结构性损害。
+- `Should Fix`:值得排期处理的真实可靠性、架构、测试、运维或可维护性风险。
+- `Needs Decision`:正确结果取决于产品语义、风险容忍度或只有用户能做的取舍。
+- `Note`:有边界、可接受的妥协或观察;记录其上限以及什么情况下值得重新审视。
+
+按影响、可能性、波及范围和可逆性排序,而不是按代码规模或扫描器给出的严重级别。当同一类问题跨周期反复出现时,建议采用持久控制手段(测试、lint、共享入口、CI 守卫),而不是再扫描一次。
+
+### 5. 仅在授权时修复
+
+- 只修复用户授权的发现 ID。在选择修复方向之前,先解决阻塞性的 `Needs Decision`。
+- 做最小且连贯的改动,并在根因边界处添加回归检查。
+- 自己验证每个修复:运行相关检查,并对照发现的触发条件重读修复 diff。只有当闭合在当前代码中可见并有上述证据支持时,才标记为 `fixed`。
+- 不要启动重新审计的轮次。如果修复未通过验证或引出新问题,停下来,带着证据把该项作为决策交给用户。
+
+### 6. 记录与报告
+
+- 更新 `AUDIT.md`:System Map 的变化、每个已覆盖领域的提交/日期/深度/下次重点,以及每个发现的状态和最后验证提交。
+- 写入 `.agent-work/audit/runs/{YYYYMMDD-HHMM}.md`,默认使用中文,路径、符号、命令和发现 ID 保持原样:
+
+```markdown
+# 审计报告 {YYYY-MM-DD HH:MM}
+
+- 范围: <head commit; domains and areas covered; why they were selected>
+- 未覆盖: <what was left out and why>
+- 证据: <checks run and results; evidence that was unavailable>
+
+## 发现
+### AUD-00N <title> — <severity>
+- 触发: <how it is reached>
+- 影响: <what goes wrong, for whom>
+- 证据: <file:line / command output; fact or inference>
+- 修复方向: <direction; fix status if remediated>
+
+## 需要用户决策
+<Needs Decision items and unresolved fixes, each with options>
+
+## 下次重点
+<domains and areas to prioritize next run>
+```
+
+- 默认用中文回复用户,简要采用同样的结构:先按严重程度列出发现,然后是需要的决策、覆盖的局限以及下次重点。绝不暗示未审计的区域是安全的。
+
+当范围内每个区域都更新了 Coverage、每个发现都有证据、已授权的修复都经过验证、且报告说明了自身局限时,一次运行才算完成。
+
+## 提交 trailer
+
+除非用户要求,否则不要提交。当用户要求提交一次已完成的审计运行时,在提交消息中恰好包含一次以下 trailer,以便审计提醒钩子重置计数:
 
 ```text
 Maintenance-Audit: true

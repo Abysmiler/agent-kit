@@ -68,7 +68,7 @@ Use this skill only when explicitly invoked.
 ## Relationship to sectioned-feature-development
 
 This skill owns the ONLY worktree convention in agent-kit. The
-sectioned-feature-development workflow creates its retry and parallel-section
+sectioned-feature-development workflow creates its parallel-section
 worktrees under the same `.worktrees/` workspace and registers every active
 task in `.worktrees/current-agents/` using this skill's conflict-check
 protocol. When both are active, the registry is the single source of truth

@@ -29,6 +29,6 @@ Verified against ZCode's bundled `zcode-guide` 0.1.0 configuration guide.
 
 ## Shared (host-agnostic)
 
-- Working state: `.agent-work/` (plans, section artifacts, debug notes, audit ledgers)
+- Working state: `.agent-work/` (plans, feature state, reviews, debug notes, audit state)
 - Worktree workspace: `.worktrees/` with `.worktrees/current-agents/` registry
 - Git hooks: `.githooks/` + repository-local `core.hooksPath`

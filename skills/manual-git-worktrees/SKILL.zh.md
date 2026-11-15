@@ -70,7 +70,7 @@ description: Use only when the user explicitly asks to create or use an isolated
 ## 与 sectioned-feature-development 的关系
 
 本技能拥有 agent-kit 中唯一的 worktree 约定。sectioned-feature-development
-工作流在同一 `.worktrees/` 工作区下创建其重试与并行章节（section）的
+工作流在同一 `.worktrees/` 工作区下创建其并行章节（section）的
 worktree，并使用本技能的冲突检查协议将每个活动任务注册到
 `.worktrees/current-agents/`。当两者同时活跃时，注册表是范围冲突的
 唯一事实来源。
