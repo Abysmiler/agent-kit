@@ -160,15 +160,17 @@ test('unmanaged file that differs from source conflicts; identical file is adopt
 test('files removed from source are deleted when untouched and kept when edited', (t) => {
   const { repo, homes, run } = fixture(t);
   write(path.join(repo, 'skills/beta/SKILL.md'), 'beta\n');
+  // A nested directory, to check that directories emptied by a removal are pruned bottom-up.
+  write(path.join(repo, 'skills/alpha/data/deep/table.txt'), 'data\n');
   run('--apply');
   write(path.join(homes.codex, 'skills/beta/SKILL.md'), 'beta, edited\n');
   write(path.join(homes.claude, 'skills/user-skill/SKILL.md'), 'mine\n');
   fs.rmSync(path.join(repo, 'skills/beta'), { recursive: true });
-  fs.rmSync(path.join(repo, 'skills/alpha/references'), { recursive: true });
+  fs.rmSync(path.join(repo, 'skills/alpha/data'), { recursive: true });
   const { code, out } = run('--apply');
   assert.equal(code, 0);
-  assert.ok(!exists(path.join(homes.claude, 'skills/beta')), 'untouched stale skill and its empty directory are removed');
-  assert.ok(!exists(path.join(homes.claude, 'skills/alpha/references')));
+  assert.ok(!exists(path.join(homes.claude, 'skills/beta/SKILL.md')), 'untouched stale file is removed');
+  assert.ok(!exists(path.join(homes.claude, 'skills/alpha/data')), 'directories emptied by the removal are pruned');
   assert.ok(exists(path.join(homes.claude, 'skills/alpha/SKILL.md')));
   assert.equal(read(path.join(homes.claude, 'skills/user-skill/SKILL.md')), 'mine\n', 'files the tool never installed are left alone');
   assert.equal(read(path.join(homes.codex, 'skills/beta/SKILL.md')), 'beta, edited\n');

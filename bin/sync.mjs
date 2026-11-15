@@ -271,6 +271,25 @@ function atomicWrite(dest, content) {
   }
 }
 
+// Best-effort removal of a directory emptied by this run. On Windows a removed file can linger
+// briefly, or leave a transient sibling such as "NAME.EXT.tmp" written by a desktop tool, so
+// such entries are waited out. rmdir never removes a non-empty directory, so retrying is safe.
+function removeIfEmpty(dir, gone) {
+  const removed = [...gone].filter((file) => path.dirname(file) === dir).map((file) => path.basename(file).toLowerCase());
+  const transient = (name) => removed.some((base) => name.toLowerCase().startsWith(base));
+  if (!fs.readdirSync(dir).every(transient)) return false;
+  for (let attempt = 0; attempt < 25; attempt += 1) {
+    try {
+      fs.rmdirSync(dir);
+      return true;
+    } catch (error) {
+      if (!['ENOTEMPTY', 'EPERM', 'EBUSY', 'EACCES'].includes(error.code)) throw error;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
+    }
+  }
+  return false;
+}
+
 function verifyUnchanged(plan, rel, before) {
   if (!same(readManaged(plan.home, rel), before)) throw new Conflict(`${path.join(plan.home, rel)} changed after planning; rerun the sync`);
 }
@@ -286,6 +305,7 @@ export function applyPlans(plans) {
   for (const plan of plans) {
     const backupRoot = path.join(plan.home, STATE_DIR, 'backups', stamp);
     const skillsRoot = path.join(plan.home, 'skills');
+    const gone = new Set();
     try {
       for (const action of plan.actions.filter((item) => WRITES.has(item.kind))) {
         verifyUnchanged(plan, action.rel, action.before);
@@ -300,10 +320,8 @@ export function applyPlans(plans) {
           continue;
         }
         fs.unlinkSync(action.dest);
-        for (let dir = path.dirname(action.dest); dir !== skillsRoot && dir.startsWith(skillsRoot); dir = path.dirname(dir)) {
-          if (fs.readdirSync(dir).length) break;
-          fs.rmdirSync(dir);
-        }
+        gone.add(action.dest);
+        for (let dir = path.dirname(action.dest); dir !== skillsRoot && dir.startsWith(skillsRoot) && removeIfEmpty(dir, gone); dir = path.dirname(dir)) gone.add(dir);
       }
       if (plan.manifestContent) atomicWrite(path.join(plan.home, MANIFEST), plan.manifestContent);
     } catch (error) {
